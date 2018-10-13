@@ -1,0 +1,28 @@
+{
+  "name": "typedfastbitset",
+  "description": "Speed-optimized BitSet implementation for modern browsers and JavaScript engines, using typed arrays",
+  "keywords": [
+    "bitmap",
+    "bitset",
+    "performance"
+  ],
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lemire/TypedFastBitSet.js.git"
+  },
+  "main": "TypedFastBitSet.js",
+  "scripts": {
+    "test": "mocha unit/basictests.js"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/lemire/TypedFastBitSet.js/issues"
+  },
+  "homepage": "https://github.com/lemire/TypedFastBitSet.js#readme",
+  "devDependencies": {
+    "benchmark": "~1.0.0",
+    "mocha": "^5.2.0"
+  },
+  "author": "Daniel Lemire <lemire@gmail.com> (http://lemire.me/en/)"
+}

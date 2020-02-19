@@ -73,7 +73,7 @@ TypedFastBitSet.prototype.flip = function(index) {
 // Remove all values, reset memory usage
 TypedFastBitSet.prototype.clear = function() {
   this.count = 0 | 0;
-  this.words = new Uint32Array(count);
+  this.words = new Uint32Array(this.count);
 };
 
 // Set the bit at index to false

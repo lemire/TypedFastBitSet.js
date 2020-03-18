@@ -109,7 +109,7 @@ TypedFastBitSet.prototype.has = function(index) {
 };
 
 // Reduce the memory usage to a minimum
-TypedFastBitSet.prototype.trim = function(index) {
+TypedFastBitSet.prototype.trim = function() {
   var nl = this.words.length
   while ((nl > 0) && (this.words[nl - 1] === 0)) {
       nl--;
@@ -166,7 +166,7 @@ TypedFastBitSet.prototype.array = function() {
 };
 
 
-// Return an array with the set bit locations (values)
+// Execute fnc on each value stored in bitset
 TypedFastBitSet.prototype.forEach = function(fnc) {
   var c = this.count | 0;
   for (var k = 0; k < c; ++k) {
@@ -246,8 +246,7 @@ TypedFastBitSet.prototype.new_intersection = function(otherbitmap) {
   return answer;
 };
 
-// Computes the intersection between this bitset and another one,
-// the current bitmap is modified
+// Check whether this bitset and another one are equal
 TypedFastBitSet.prototype.equals = function(otherbitmap) {
   var mcount = Math.min(this.count , otherbitmap.count);
   for (var k = 0 | 0; k < mcount; ++k) {
@@ -364,7 +363,7 @@ TypedFastBitSet.prototype.new_difference = function(otherbitmap) {
   return this.clone().difference(otherbitmap);// should be fast enough
 };
 
-// Computes the size union between this bitset and another one
+// Computes the size of the union between this bitset and another one
 TypedFastBitSet.prototype.union_size = function(otherbitmap) {
   var mcount = Math.min(this.count,otherbitmap.count);
   var answer = 0 | 0;

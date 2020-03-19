@@ -144,4 +144,53 @@ describe('BitSet', function() {
     if (!arraysEquals(a, a2)) throw 'bad values';
   });
 
+  it('Testing addRange/removeRange', function () {
+    var b1 = new TypedFastBitSet();
+    b1.addRange(0, 1);
+    if (!b1.has(0)) throw 'bad value';
+    if (b1.size() != 1) throw 'bad size';
+
+    b1.addRange(32, 64);
+    for (var i = 32; i < 64; ++i) {
+      if (!b1.has(i)) throw 'bad value';
+    }
+
+    if (b1.size() != 33) throw 'bad size';
+
+    b1.addRange(64, 129);
+    for (var i = 63; i < 129; ++i) {
+      if (!b1.has(i)) throw 'bad value';
+    }
+
+    if (b1.size() != 98) throw 'bad size';
+
+    for (var i = 0; i < 256; ++i) {
+      for (var j = i - 1; j < 256; ++j) {
+        var bb = new TypedFastBitSet();
+        bb.addRange(i, j);
+        for (var k = 0; k < 256 + 32; ++k) {
+          if (bb.has(k) !== (k >= i && k < j)) throw 'bad value';
+        }
+        if (j > 0 && bb.count > (j << 5)) throw 'bad count';
+      }
+    }
+
+    var b2 = new TypedFastBitSet();
+    b2.addRange(0, 193);
+    b2.remove(0);
+    b2.remove(63);
+    b2.remove(128);
+    b2.trim();
+
+    for (var i = 0; i < 256; ++i) {
+      for (var j = i - 1; j < 256; ++j) {
+        var bb = b2.clone();
+        bb.removeRange(i, j);
+        for (var k = 0; k < 256 + 32; ++k) {
+          if (bb.has(k) !== (b2.has(k) && !(k >= i && k < j))) throw 'bad value';
+        }
+      }
+    }
+  });
+
 });

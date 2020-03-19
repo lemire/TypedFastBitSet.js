@@ -84,6 +84,48 @@ TypedFastBitSet.prototype.remove = function(index) {
   this.words[index  >>> 5] &= ~(1 << index);
 };
 
+// Set bits from start (inclusive) to end (exclusive)
+TypedFastBitSet.prototype.addRange = function (start, end) {
+  if (start >= end) {
+    return;
+  }
+
+  if ((this.count << 5) <= end) {
+    this.resize(end);
+  }
+
+  var firstword = start >> 5;
+  var endword = (end - 1) >> 5;
+
+  if (firstword === endword) {
+    this.words[firstword] |= (~0 << start) & (~0 >>> -end);
+    return;
+  }
+  this.words[firstword] |= ~0 << start;
+  this.words.fill(~0, firstword + 1, endword);
+  this.words[endword] |= ~0 >>> -end;
+};
+
+// Remove bits from start (inclusive) to end (exclusive)
+TypedFastBitSet.prototype.removeRange = function (start, end) {
+  start = Math.min(start, (this.count << 5) - 1);
+  end = Math.min(end, (this.count << 5) - 1);
+
+  if (start >= end) {
+    return;
+  }
+  var firstword = start >> 5;
+  var endword = (end - 1) >> 5;
+
+  if (firstword === endword) {
+    this.words[firstword] &= ~((~0 << start) & (~0 >>> -end));
+    return;
+  }
+  this.words[firstword] &= ~(~0 << start);
+  this.words.fill(0, firstword + 1, endword);
+  this.words[endword] &= ~(~0 >>> -end);
+};
+
 // Return true if no bit is set
 TypedFastBitSet.prototype.isEmpty = function(index) {
   var c = this.count;

@@ -11,7 +11,7 @@ operations (union, difference, intersection).
 
 The TypedFastBitSet.js implementation optimizes for speed, leveraging commonly available features
 like typed arrays. It can be several times faster than competitive alternatives. It is also entirely
-dynamic, and has functions to minimize the memory usage. It should be supported by most of the modern 
+dynamic, and has functions to minimize the memory usage. It should be supported by most of the modern
 browsers and JavaScript engines.  It is ideal for maintaining sets of integers when performance matters.
 
 License: Apache License 2.0
@@ -22,21 +22,21 @@ Usage
 ===
 
 ```javascript
-var b = new TypedFastBitSet();// initially empty
+const b = new TypedFastBitSet();// initially empty
 b.add(1);// add the value "1"
 b.has(1); // check that the value is present! (will return true)
 b.add(2);
 console.log(""+b);// should display {1,2}
 b.add(10);
 b.array(); // would return [1,2,10]
-var c = new TypedFastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
+let c = new TypedFastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
 c.difference(b); // from c, remove elements that are in b
-var su = c.union_size(b);// compute the size of the union (bitsets are unchanged)
+const su = c.union_size(b);// compute the size of the union (bitsets are unchanged)
 c.union(b); // c will contain all elements that are in c and b
-var out1 = c.new_union(b); // creates a new bitmap that contains everything in c and b
-var out2 = c.new_intersection(b); // creates a new bitmap that contains everything that is in both c and b
-var s1 = c.intersection_size(b);// compute the size of the intersection (bitsets are unchanged)
-var s3 = c.difference_size(b);// compute the size of the difference (bitsets are unchanged)
+const out1 = c.new_union(b); // creates a new bitmap that contains everything in c and b
+const out2 = c.new_intersection(b); // creates a new bitmap that contains everything that is in both c and b
+const s1 = c.intersection_size(b);// compute the size of the intersection (bitsets are unchanged)
+const s3 = c.difference_size(b);// compute the size of the difference (bitsets are unchanged)
 c.intersects(b); // return true if c intersects with b
 c.intersection(b); // c will only contain elements that are in both c and b
 c = b.clone(); // create a (deep) copy of b and assign it to c.
@@ -48,9 +48,9 @@ c.trim(); // reduce the memory usage of the bitmap if possible, the content rema
 If you are using node.js, you need to import the module:
 
 ```javascript
-var TypedFastBitSet = require("typedfastbitset");
-var b = new FastBitSet();// initially empty
-b.set(1);// add the value "1"
+const TypedFastBitSet = require("typedfastbitset");
+const b = new FastBitSet();// initially empty
+b.add(1);// add the value "1"
 ```
 
 
@@ -203,7 +203,7 @@ Set x 76,784,958 ops/sec ±0.01% (104 runs sampled)
 You might also like...
 ===
 
-If you like this library, you might also like 
+If you like this library, you might also like
 - https://github.com/lemire/FastBitSet.js
 - https://github.com/lemire/FastPriorityQueue.js
 - https://github.com/lemire/StablePriorityQueue.js

@@ -84,6 +84,48 @@ TypedFastBitSet.prototype.remove = function (index) {
   this.words[index >>> 5] &= ~(1 << index);
 };
 
+// Set bits from start (inclusive) to end (exclusive)
+TypedFastBitSet.prototype.addRange = function (start, end) {
+  if (start >= end) {
+    return;
+  }
+
+  if (this.words.length << 5 <= end) {
+    this.resize(end);
+  }
+
+  const firstword = start >> 5;
+  const endword = (end - 1) >> 5;
+
+  if (firstword === endword) {
+    this.words[firstword] |= (~0 << start) & (~0 >>> -end);
+    return;
+  }
+  this.words[firstword] |= ~0 << start;
+  this.words.fill(~0, firstword + 1, endword);
+  this.words[endword] |= ~0 >>> -end;
+};
+
+// Remove bits from start (inclusive) to end (exclusive)
+TypedFastBitSet.prototype.removeRange = function (start, end) {
+  start = Math.min(start, (this.words.length << 5) - 1);
+  end = Math.min(end, (this.words.length << 5) - 1);
+
+  if (start >= end) {
+    return;
+  }
+  const firstword = start >> 5;
+  const endword = (end - 1) >> 5;
+
+  if (firstword === endword) {
+    this.words[firstword] &= ~((~0 << start) & (~0 >>> -end));
+    return;
+  }
+  this.words[firstword] &= ~(~0 << start);
+  this.words.fill(0, firstword + 1, endword);
+  this.words[endword] &= ~(~0 >>> -end);
+};
+
 // Return true if no bit is set
 TypedFastBitSet.prototype.isEmpty = function (index) {
   const c = this.words.length;
@@ -109,8 +151,8 @@ TypedFastBitSet.prototype.checkedAdd = function (index) {
 };
 
 // Reduce the memory usage to a minimum
-TypedFastBitSet.prototype.trim = function (index) {
-  let nl = this.words.length;
+TypedFastBitSet.prototype.trim = function () {
+  var nl = this.words.length;
   while (nl > 0 && this.words[nl - 1] === 0) {
     nl--;
   }
@@ -156,8 +198,18 @@ TypedFastBitSet.prototype.hammingWeight4 = function (v1, v2, v3, v4) {
 TypedFastBitSet.prototype.size = function () {
   let answer = 0;
   const c = this.words.length;
-  for (let i = 0; i < c; i++) {
-    answer += this.hammingWeight(this.words[i] | 0);
+  let k = 0 | 0;
+  for (; k + 4 < c; k += 4) {
+    answer += this.hammingWeight4(
+      this.words[k] | 0,
+      this.words[k + 1] | 0,
+      this.words[k + 2] | 0,
+      this.words[k + 3] | 0
+    );
+  }
+
+  for (; k < c; ++k) {
+    answer += this.hammingWeight(this.words[k] | 0);
   }
   return answer;
 };

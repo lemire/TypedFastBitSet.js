@@ -28,7 +28,8 @@ b.has(1); // check that the value is present! (will return true)
 b.add(2);
 console.log(""+b);// should display {1,2}
 b.add(10);
-b.array(); // would return [1,2,10]
+b.addRange(11, 13)
+b.array(); // would return [1, 2, 10, 11, 12, 13]
 let c = new TypedFastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
 c.difference(b); // from c, remove elements that are in b (modifies c)
 c.difference2(b) // from c, remove elements that are in b (modifies b)

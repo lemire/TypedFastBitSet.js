@@ -30,18 +30,23 @@ console.log(""+b);// should display {1,2}
 b.add(10);
 b.array(); // would return [1,2,10]
 let c = new TypedFastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
-c.difference(b); // from c, remove elements that are in b
+c.difference(b); // from c, remove elements that are in b (modifies c)
+c.difference2(b) // from c, remove elements that are in b (modifies b)
+c.change(b); // c will contain all elements that are in b or in c, but not both (elements that changed)
 const su = c.union_size(b);// compute the size of the union (bitsets are unchanged)
 c.union(b); // c will contain all elements that are in c and b
 const out1 = c.new_union(b); // creates a new bitmap that contains everything in c and b
 const out2 = c.new_intersection(b); // creates a new bitmap that contains everything that is in both c and b
+const out3 = c.new_change(b); // creates a new bitmap that contains everything in b or in c, but not both
 const s1 = c.intersection_size(b);// compute the size of the intersection (bitsets are unchanged)
-const s3 = c.difference_size(b);// compute the size of the difference (bitsets are unchanged)
+const s2 = c.difference_size(b);// compute the size of the difference (bitsets are unchanged)
+const s3 = c.change_size(b); // compute the number of elements that are in b but not c, or vice versa
 c.intersects(b); // return true if c intersects with b
 c.intersection(b); // c will only contain elements that are in both c and b
 c = b.clone(); // create a (deep) copy of b and assign it to c.
 c.equals(b); // checks whether c and b are equal
 c.forEach(fnc); // execute fnc on each value stored in c
+for (const x of c) fnc(x); // execute fnc on each value stored in c (allows early exit with break)
 c.trim(); // reduce the memory usage of the bitmap if possible, the content remains the same
 ```
 
@@ -49,7 +54,7 @@ If you are using node.js, you need to import the module:
 
 ```javascript
 const TypedFastBitSet = require("typedfastbitset");
-const b = new FastBitSet();// initially empty
+const b = new TypedFastBitSet();// initially empty
 b.add(1);// add the value "1"
 ```
 

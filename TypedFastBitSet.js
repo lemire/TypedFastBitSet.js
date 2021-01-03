@@ -20,15 +20,17 @@
  *  b.add(10);
  *  b.array(); // would return [1,2,10]
  *
- *  var c = new TypedFastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
- *  c.difference(b); // from c, remove elements that are in b
- *  var su = c.union_size(b);// compute the size of the union (bitsets are unchanged)
+ *  let c = new FastBitSet([1,2,3,10]); // create bitset initialized with values 1,2,3,10
+ *  c.difference(b); // from c, remove elements that are in b (modifies c)
+ *  c.difference2(b); // from c, remove elements that are in b (modifies b)
+ *  c.change(b); // c will contain elements that are in b or in c, but not both
+ *  const su = c.union_size(b);// compute the size of the union (bitsets are unchanged)
  *  c.union(b); // c will contain all elements that are in c and b
- *  var s1 = c.intersection_size(b);// compute the size of the intersection (bitsets are unchanged)
+ *  const s1 = c.intersection_size(b);// compute the size of the intersection (bitsets are unchanged)
  *  c.intersection(b); // c will only contain elements that are in both c and b
  *  c = b.clone(); // create a (deep) copy of b and assign it to c.
  *  c.equals(b); // check whether c and b are equal
- *
+
  *   See README.md file for a more complete description.
  *
  * You can install the library under node with the command line

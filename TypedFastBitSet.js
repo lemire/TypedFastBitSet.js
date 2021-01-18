@@ -340,12 +340,12 @@ TypedFastBitSet.prototype.equals = function (otherbitmap) {
   for (let k = 0 | 0; k < mcount; ++k) {
     if (this.words[k] != otherbitmap.words[k]) return false;
   }
-  if (this.count < otherbitmap.count) {
+  if (this.words.length < otherbitmap.words.length) {
     const c = otherbitmap.words.length;
     for (let k = this.words.length; k < c; ++k) {
       if (otherbitmap.words[k] != 0) return false;
     }
-  } else if (otherbitmap.words.length < this.count) {
+  } else if (otherbitmap.words.length < this.words.length) {
     const c = this.words.length;
     for (let k = otherbitmap.words.length; k < c; ++k) {
       if (this.words[k] != 0) return false;

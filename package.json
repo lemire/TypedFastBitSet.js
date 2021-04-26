@@ -12,6 +12,7 @@
     "url": "git+https://github.com/lemire/TypedFastBitSet.js.git"
   },
   "main": "TypedFastBitSet.js",
+  "types": "TypedFastBitSet.d.ts",
   "scripts": {
     "test": "mocha unit/basictests.js"
   },

@@ -57,8 +57,11 @@ declare class TypedFastBitSet {
     /** If the value was not in the set, add it, otherwise remove it (flip bit at `index`) */
     flip(index: number): void;
 
-    /** Return an array with the set bit locations (values) */
+    /** Call a function with the set bit locations (values) */
     forEach(fnc: (index: number) => void): void;
+
+    /** Iterate over the set bit locations */
+    *[Symbol.iterator](): IterableIterator[number];
 
     /** fast function to compute the Hamming weight of a 32-bit unsigned integer */
     hammingWeight(v: number): number;

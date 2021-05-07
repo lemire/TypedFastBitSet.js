@@ -61,7 +61,7 @@ declare class TypedFastBitSet {
     forEach(fnc: (index: number) => void): void;
 
     /** Iterate over the set bit locations */
-    *[Symbol.iterator](): IterableIterator[number];
+    [Symbol.iterator](): IterableIterator<number>;
 
     /** fast function to compute the Hamming weight of a 32-bit unsigned integer */
     hammingWeight(v: number): number;

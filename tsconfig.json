@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["ESNext"],
+    "module": "commonjs",
+    "declaration": true,
+    "outDir": "lib",
+    "strict": false,
+    "stripInternal": true,
+    "removeComments": true,
+    "esModuleInterop": true
+  },
+  "include": ["unit"]
+}

@@ -14,7 +14,7 @@
   "main": "TypedFastBitSet.js",
   "types": "TypedFastBitSet.d.ts",
   "scripts": {
-    "test": "mocha unit/basictests.js"
+    "test": "tsc && mocha -r ts-node/register unit/*"
   },
   "license": "Apache-2.0",
   "bugs": {
@@ -22,8 +22,11 @@
   },
   "homepage": "https://github.com/lemire/TypedFastBitSet.js#readme",
   "devDependencies": {
+    "@types/mocha": "^8.2.2",
     "benchmark": "~1.0.0",
-    "mocha": "^8.2.1"
+    "mocha": "^8.2.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
   },
   "author": "Daniel Lemire <lemire@gmail.com> (http://lemire.me/en/)"
 }

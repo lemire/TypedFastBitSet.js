@@ -4,6 +4,11 @@
 
 
 declare class TypedFastBitSet {
+    /**
+     * Returns a new TypedFastBitset given a Uint32Array of words
+     */
+    static fromWords(words: Uint32Array): TypedFastBitSet;
+
     constructor(iterable?: number[]);
 
     /** Add the value (Set the bit at `index` to `true`) */

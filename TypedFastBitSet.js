@@ -129,7 +129,7 @@ TypedFastBitSet.prototype.removeRange = function (start, end) {
 };
 
 // Return true if no bit is set
-TypedFastBitSet.prototype.isEmpty = function (index) {
+TypedFastBitSet.prototype.isEmpty = function () {
   const c = this.words.length;
   for (let i = 0; i < c; i++) {
     if (this.words[i] !== 0) return false;

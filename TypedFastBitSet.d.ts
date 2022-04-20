@@ -93,7 +93,7 @@ declare class TypedFastBitSet {
     intersection_size(otherbitmap: TypedFastBitSet): number;
 
     /** Return `true` if no bit is set */
-    isEmpty(index: number): boolean;
+    isEmpty(): boolean;
 
     /** Computes change between bitsets, a new bitset is generated */
     new_change(otherbitmap: TypedFastBitSet): TypedFastBitSet;

@@ -78,7 +78,9 @@ Using node.js (npm), you can test the code as follows...
 
 # Is it faster?
 
-It can be quite fast compared to competitive alternatives :
+To run benchmarks, please use the instructions in the benchmark folder.
+
+TypedFastBitSet can be quite fast compared to competitive alternatives :
 
 ```bash
 $ node test.js

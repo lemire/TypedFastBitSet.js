@@ -1,0 +1,22 @@
+name: Test
+on: push
+jobs:
+  all:
+    timeout-minutes: 15
+    env:
+      CI: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Use Node.js 14
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+          cache: npm
+      - name: Use NPM 8
+        run: npm i -g npm@8
+      - run: npm ci
+      - name: build
+        run: npm run build
+      - name: test
+        run: npm run test

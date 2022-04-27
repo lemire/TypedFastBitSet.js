@@ -4,7 +4,7 @@
 "use strict";
 
 const FastBitSet = require("fastbitset");
-const TypedFastBitSet = require("../TypedFastBitSet.js");
+const { TypedFastBitSet, SparseTypedFastBitSet } = require("../lib");
 const BitSet = require("bitset.js");
 const Benchmark = require("benchmark");
 const tBitSet = require("bitset");
@@ -140,12 +140,15 @@ function CreateBench() {
   console.log("starting dynamic bitmap creation benchmark");
   const b = new FastBitSet();
   const tb = new TypedFastBitSet();
+  const stb = new SparseTypedFastBitSet();
 
   let bs = new BitSet();
   const bt = new tBitSet();
   const fb = new fBitSet(smallgap * N + 5);
   for (let i = 0; i < N; i++) {
     b.add(smallgap * i + 5);
+    tb.add(smallgap * i + 5);
+    stb.add(smallgap * i + 5);
     bs = bs.set(smallgap * i + 5, true);
     bt.set(smallgap * i + 5);
     fb.set(smallgap * i + 5);
@@ -165,6 +168,13 @@ function CreateBench() {
     })
     .add("TypedFastBitSet", function () {
       const b = new TypedFastBitSet();
+      for (let i = 0; i < N; i++) {
+        b.add(smallgap * i + 5);
+      }
+      return b;
+    })
+    .add("SparseTypedFastBitSet", function () {
+      const b = new SparseTypedFastBitSet();
       for (let i = 0; i < N; i++) {
         b.add(smallgap * i + 5);
       }
@@ -203,12 +213,14 @@ function ArrayBench() {
   console.log("starting array extraction benchmark");
   const b = new FastBitSet();
   const tb = new TypedFastBitSet();
+  const stb = new SparseTypedFastBitSet();
   let bs = new BitSet();
   const bt = new tBitSet();
   const fb = new fBitSet(smallgap * N + 5);
   for (let i = 0; i < N; i++) {
     b.add(smallgap * i + 5);
     tb.add(smallgap * i + 5);
+    stb.add(smallgap * i + 5);
     bs = bs.set(smallgap * i + 5, true);
     bt.set(smallgap * i + 5);
     fb.set(smallgap * i + 5);
@@ -224,6 +236,9 @@ function ArrayBench() {
     })
     .add("TypedFastBitSet", function () {
       return tb.array();
+    })
+    .add("SparseTypedFastBitSet", function () {
+      return stb.array();
     })
     // .add("infusion.BitSet.js", function () {
     // return bs.toArray();
@@ -243,6 +258,7 @@ function ForEachBench() {
   console.log("starting forEach benchmark");
   const b = new FastBitSet();
   const tb = new TypedFastBitSet();
+  const stb = new TypedFastBitSet();
 
   let bs = new BitSet();
   const bt = new tBitSet();
@@ -251,6 +267,7 @@ function ForEachBench() {
   for (let i = 0; i < N; i++) {
     b.add(smallgap * i + 5);
     tb.add(smallgap * i + 5);
+    stb.add(smallgap * i + 5);
     bs = bs.set(smallgap * i + 5, true);
     bt.set(smallgap * i + 5);
     fb.set(smallgap * i + 5);
@@ -283,6 +300,14 @@ function ForEachBench() {
       tb.forEach(inc);
       return card;
     })
+    .add("SparseTypedFastBitSet", function () {
+      let card = 0;
+      const inc = function () {
+        card++;
+      };
+      stb.forEach(inc);
+      return card;
+    })
     .add("FastBitSet (via array)", function () {
       const card = 0;
       for (const i in b.array()) {
@@ -293,6 +318,13 @@ function ForEachBench() {
     .add("TypedFastBitSet (via array)", function () {
       let card = 0;
       for (const i in tb.array()) {
+        card++;
+      }
+      return card;
+    })
+    .add("SparseTypedFastBitSet (via array)", function () {
+      let card = 0;
+      for (const i in stb.array()) {
         card++;
       }
       return card;
@@ -325,12 +357,14 @@ function CardBench() {
   console.log("starting cardinality benchmark");
   const b = new FastBitSet();
   const tb = new TypedFastBitSet();
+  const stb = new SparseTypedFastBitSet();
   let bs = new BitSet();
   const bt = new tBitSet();
   const fb = new fBitSet(smallgap * N + 5);
   for (let i = 0; i < N; i++) {
     b.add(smallgap * i + 5);
     tb.add(smallgap * i + 5);
+    stb.add(smallgap * i + 5);
     bs = bs.set(smallgap * i + 5, true);
     bt.set(smallgap * i + 5);
     fb.set(smallgap * i + 5);
@@ -345,7 +379,10 @@ function CardBench() {
       return b.size();
     })
     .add("TypedFastBitSet", function () {
-      return b.size();
+      return tb.size();
+    })
+    .add("SparseTypedFastBitSet", function () {
+      return stb.size();
     })
     .add("infusion.BitSet.js", function () {
       return bs.cardinality();
@@ -368,6 +405,7 @@ function QueryBench() {
   console.log("starting query benchmark");
   const b = new FastBitSet();
   const tb = new TypedFastBitSet();
+  const stb = new TypedFastBitSet();
   let bs = new BitSet();
   const bt = new tBitSet();
   const fb = new fBitSet(smallgap * N + 5);
@@ -375,6 +413,7 @@ function QueryBench() {
   for (let i = 0; i < N; i++) {
     b.add(smallgap * i + 5);
     tb.add(smallgap * i + 5);
+    stb.add(smallgap * i + 5);
     bs = bs.set(smallgap * i + 5, true);
     bt.set(smallgap * i + 5);
     fb.set(smallgap * i + 5);
@@ -391,6 +430,9 @@ function QueryBench() {
     })
     .add("TypedFastBitSet", function () {
       return tb.has(122);
+    })
+    .add("SparseTypedFastBitSet", function () {
+      return stb.has(122);
     })
     .add("infusion.BitSet.js", function () {
       return bs.get(122);
@@ -416,6 +458,7 @@ function CloneBench() {
   console.log("starting clone benchmark");
   const b = new FastBitSet();
   const tb = new TypedFastBitSet();
+  const stb = new SparseTypedFastBitSet();
   let bs = new BitSet();
   const bt = new tBitSet();
   const fb = new fBitSet(smallgap * N + 5);
@@ -423,6 +466,7 @@ function CloneBench() {
   for (let i = 0; i < N; i++) {
     b.add(smallgap * i + 5);
     tb.add(smallgap * i + 5);
+    stb.add(smallgap * i + 5);
     bs = bs.set(smallgap * i + 5, true);
     bt.set(smallgap * i + 5);
     fb.set(smallgap * i + 5);
@@ -439,6 +483,9 @@ function CloneBench() {
     })
     .add("TypedFastBitSet", function () {
       return tb.clone();
+    })
+    .add("SparseTypedFastBitSet", function () {
+      return stb.clone();
     })
     .add("infusion.BitSet.js", function () {
       return bs.clone();
@@ -461,12 +508,14 @@ function AndBench() {
   console.log("starting intersection query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
   const r2 = new roaring.RoaringBitmap32();
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
   const s1 = new Set();
@@ -477,6 +526,7 @@ function AndBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -485,6 +535,7 @@ function AndBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -505,6 +556,9 @@ function AndBench() {
     })
     .add("TypedFastBitSet (creates new bitset)", function () {
       return tb1.new_intersection(tb2);
+    })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.new_intersection(stb2);
     })
     .add("mattkrick.fast-bitset  (creates new bitset)", function () {
       return fb1.and(fb2);
@@ -528,12 +582,14 @@ function AndCardBench() {
   console.log("starting intersection cardinality query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
   const r2 = new roaring.RoaringBitmap32();
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
   const s1 = new Set();
@@ -544,6 +600,7 @@ function AndCardBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -552,6 +609,7 @@ function AndCardBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -581,6 +639,12 @@ function AndCardBench() {
     .add("TypedFastBitSet (fast way)", function () {
       return tb1.intersection_size(tb2);
     })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.new_intersection(stb2).size();
+    })
+    .add("SparseTypedFastBitSet (fast way)", function () {
+      return stb1.intersection_size(stb2);
+    })
     .add("roaring", function () {
       return r1.andCardinality(r2);
     })
@@ -602,12 +666,14 @@ function OrCardBench() {
   console.log("starting union cardinality query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
   const r2 = new roaring.RoaringBitmap32();
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
   const s1 = new Set();
@@ -617,6 +683,7 @@ function OrCardBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -625,6 +692,7 @@ function OrCardBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -652,6 +720,12 @@ function OrCardBench() {
     .add("TypedFastBitSet (fast way)", function () {
       return tb1.union_size(tb2);
     })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.new_union(stb2).size();
+    })
+    .add("SparseTypedFastBitSet (fast way)", function () {
+      return stb1.union_size(stb2);
+    })
     .add("roaring", function () {
       return r1.orCardinality(r2);
     })
@@ -673,12 +747,14 @@ function DifferenceCardBench() {
   console.log("starting difference cardinality query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
   const r2 = new roaring.RoaringBitmap32();
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
   const s1 = new Set();
@@ -688,6 +764,7 @@ function DifferenceCardBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -696,6 +773,7 @@ function DifferenceCardBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -723,6 +801,12 @@ function DifferenceCardBench() {
     .add("TypedFastBitSet (fast way)", function () {
       return tb1.difference_size(tb2);
     })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.new_union(stb2).size();
+    })
+    .add("SparseTypedFastBitSet (fast way)", function () {
+      return stb1.difference_size(stb2);
+    })
     .add("roaring", function () {
       return r1.andNotCardinality(r2);
     })
@@ -741,6 +825,7 @@ function OrInplaceBench() {
   console.log("starting inplace union  benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -748,6 +833,7 @@ function OrInplaceBench() {
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -756,6 +842,7 @@ function OrInplaceBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -764,6 +851,7 @@ function OrInplaceBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -784,6 +872,9 @@ function OrInplaceBench() {
     })
     .add("TypedFastBitSet (inplace)", function () {
       return tb1.union(tb2);
+    })
+    .add("SparseTypedFastBitSet (inplace)", function () {
+      return stb1.union(tb2);
     })
     .add("infusion.BitSet.js (inplace)", function () {
       return bs1.or(bs2);
@@ -809,6 +900,7 @@ function AndInplaceBench() {
   console.log("starting inplace intersection  benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -816,6 +908,7 @@ function AndInplaceBench() {
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -824,6 +917,7 @@ function AndInplaceBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -832,6 +926,7 @@ function AndInplaceBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -854,6 +949,9 @@ function AndInplaceBench() {
     })
     .add("TypedFastBitSet (inplace)", function () {
       return tb1.intersection(tb2);
+    })
+    .add("SparseTypedFastBitSet (inplace)", function () {
+      return stb1.intersection(tb2);
     })
     .add("infusion.BitSet.js (inplace)", function () {
       return bs1.and(bs2);
@@ -881,6 +979,8 @@ function AndNotInplaceBench() {
   const bb1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
   const tbb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
+  const stbb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -890,6 +990,8 @@ function AndNotInplaceBench() {
   const bb2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
   const tbb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
+  const stbb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -899,6 +1001,7 @@ function AndNotInplaceBench() {
     b1.add(smallgap * i + 5);
     bb1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -908,6 +1011,7 @@ function AndNotInplaceBench() {
     b2.add(largegap * i + 5);
     bb2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -941,6 +1045,12 @@ function AndNotInplaceBench() {
     .add("TypedFastBitSet (inplace2)", function () {
       return tbb1.difference2(tbb2);
     })
+    .add("SparseTypedFastBitSet (inplace)", function () {
+      return stb1.difference(stb2);
+    })
+    .add("SparseTypedFastBitSet (inplace2)", function () {
+      return stbb1.difference2(stbb2);
+    })
     .add("infusion.BitSet.js (inplace)", function () {
       return bs1.andNot(bs2);
     })
@@ -965,6 +1075,7 @@ function OrBench() {
   console.log("starting union query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -972,6 +1083,7 @@ function OrBench() {
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -980,6 +1092,7 @@ function OrBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -988,6 +1101,7 @@ function OrBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -1012,6 +1126,9 @@ function OrBench() {
     .add("TypedFastBitSet (creates new bitset)", function () {
       return tb1.new_union(tb2);
     })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.new_union(stb2);
+    })
     .add("mattkrick.fast-bitset (creates new bitset)", function () {
       return fb1.or(fb2);
     })
@@ -1030,6 +1147,7 @@ function DifferenceBench() {
   console.log("starting difference query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -1037,6 +1155,7 @@ function DifferenceBench() {
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -1045,6 +1164,7 @@ function DifferenceBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -1053,6 +1173,7 @@ function DifferenceBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -1073,6 +1194,9 @@ function DifferenceBench() {
     .add("TypedFastBitSet (creates new bitset)", function () {
       return tb1.clone().difference(tb2);
     })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.clone().difference(stb2);
+    })
     .add("Set", function () {
       return genericSetDifference(s1, s2);
     })
@@ -1091,6 +1215,7 @@ function XORInplaceBench() {
   console.log("starting inplace change (XOR) benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -1098,6 +1223,7 @@ function XORInplaceBench() {
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -1106,6 +1232,7 @@ function XORInplaceBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -1114,6 +1241,7 @@ function XORInplaceBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -1136,6 +1264,9 @@ function XORInplaceBench() {
     })
     .add("TypedFastBitSet (inplace)", function () {
       return tb1.change(tb2);
+    })
+    .add("SparseTypedFastBitSet (inplace)", function () {
+      return stb1.change(stb2);
     })
     .add("infusion.BitSet.js (inplace)", function () {
       return bs1.xor(bs2);
@@ -1161,6 +1292,7 @@ function XORBench() {
   console.log("starting change (XOR) query benchmark");
   const b1 = new FastBitSet();
   const tb1 = new TypedFastBitSet();
+  const stb1 = new SparseTypedFastBitSet();
   let bs1 = new BitSet();
   const bt1 = new tBitSet();
   const r1 = new roaring.RoaringBitmap32();
@@ -1168,6 +1300,7 @@ function XORBench() {
   const fb1 = new fBitSet(largegap * N + 5);
   const b2 = new FastBitSet();
   const tb2 = new TypedFastBitSet();
+  const stb2 = new SparseTypedFastBitSet();
   let bs2 = new BitSet();
   const bt2 = new tBitSet();
   const fb2 = new fBitSet(largegap * N + 5);
@@ -1176,6 +1309,7 @@ function XORBench() {
   for (let i = 0; i < N; i++) {
     b1.add(smallgap * i + 5);
     tb1.add(smallgap * i + 5);
+    stb1.add(smallgap * i + 5);
     bs1 = bs1.set(smallgap * i + 5, true);
     bt1.set(smallgap * i + 5);
     fb1.set(smallgap * i + 5);
@@ -1184,6 +1318,7 @@ function XORBench() {
     r2.add(largegap * i + 5);
     b2.add(largegap * i + 5);
     tb2.add(largegap * i + 5);
+    stb2.add(largegap * i + 5);
     bs2 = bs2.set(largegap * i + 5, true);
     bt2.set(largegap * i + 5);
     fb2.set(largegap * i + 5);
@@ -1207,6 +1342,9 @@ function XORBench() {
     })
     .add("TypedFastBitSet (creates new bitset)", function () {
       return tb1.new_change(tb2);
+    })
+    .add("SparseTypedFastBitSet (creates new bitset)", function () {
+      return stb1.new_change(stb2);
     })
     .add("mattkrick.fast-bitset (creates new bitset)", function () {
       return fb1.xor(fb2);

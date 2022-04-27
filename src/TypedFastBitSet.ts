@@ -309,24 +309,24 @@ export class TypedFastBitSet implements BitSet {
   new_intersection(otherbitmap: BitSet) {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const answer = Object.create(TypedFastBitSet.prototype);
+
     const count = Math.min(words.length, otherWords.length);
-    answer.words = new Uint32Array(count);
+    const newWords = new Uint32Array(count);
     let k = 0 | 0;
     for (; k + 7 < count; k += 8) {
-      answer.words[k] = words[k] & otherWords[k];
-      answer.words[k + 1] = words[k + 1] & otherWords[k + 1];
-      answer.words[k + 2] = words[k + 2] & otherWords[k + 2];
-      answer.words[k + 3] = words[k + 3] & otherWords[k + 3];
-      answer.words[k + 4] = words[k + 4] & otherWords[k + 4];
-      answer.words[k + 5] = words[k + 5] & otherWords[k + 5];
-      answer.words[k + 6] = words[k + 6] & otherWords[k + 6];
-      answer.words[k + 7] = words[k + 7] & otherWords[k + 7];
+      newWords[k] = words[k] & otherWords[k];
+      newWords[k + 1] = words[k + 1] & otherWords[k + 1];
+      newWords[k + 2] = words[k + 2] & otherWords[k + 2];
+      newWords[k + 3] = words[k + 3] & otherWords[k + 3];
+      newWords[k + 4] = words[k + 4] & otherWords[k + 4];
+      newWords[k + 5] = words[k + 5] & otherWords[k + 5];
+      newWords[k + 7] = words[k + 7] & otherWords[k + 7];
+      newWords[k + 6] = words[k + 6] & otherWords[k + 6];
     }
     for (; k < count; ++k) {
-      answer.words[k] = words[k] & otherWords[k];
+      newWords[k] = words[k] & otherWords[k];
     }
-    return answer;
+    return new TypedFastBitSet(undefined, newWords);
   }
 
   // Computes the intersection between this bitset and another one,
@@ -463,34 +463,33 @@ export class TypedFastBitSet implements BitSet {
   new_change(otherbitmap: BitSet) {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const answer = Object.create(TypedFastBitSet.prototype);
     const count = Math.max(words.length, otherWords.length);
-    answer.words = new Uint32Array(count);
+    const newWords = new Uint32Array(count);
     const mcount = Math.min(words.length, otherWords.length);
     let k = 0;
     for (; k + 7 < mcount; k += 8) {
-      answer.words[k] = words[k] ^ otherWords[k];
-      answer.words[k + 1] = words[k + 1] ^ otherWords[k + 1];
-      answer.words[k + 2] = words[k + 2] ^ otherWords[k + 2];
-      answer.words[k + 3] = words[k + 3] ^ otherWords[k + 3];
-      answer.words[k + 4] = words[k + 4] ^ otherWords[k + 4];
-      answer.words[k + 5] = words[k + 5] ^ otherWords[k + 5];
-      answer.words[k + 6] = words[k + 6] ^ otherWords[k + 6];
-      answer.words[k + 7] = words[k + 7] ^ otherWords[k + 7];
+      newWords[k] = words[k] ^ otherWords[k];
+      newWords[k + 1] = words[k + 1] ^ otherWords[k + 1];
+      newWords[k + 2] = words[k + 2] ^ otherWords[k + 2];
+      newWords[k + 3] = words[k + 3] ^ otherWords[k + 3];
+      newWords[k + 4] = words[k + 4] ^ otherWords[k + 4];
+      newWords[k + 5] = words[k + 5] ^ otherWords[k + 5];
+      newWords[k + 6] = words[k + 6] ^ otherWords[k + 6];
+      newWords[k + 7] = words[k + 7] ^ otherWords[k + 7];
     }
     for (; k < mcount; ++k) {
-      answer.words[k] = words[k] ^ otherWords[k];
+      newWords[k] = words[k] ^ otherWords[k];
     }
 
     const c = words.length;
     for (k = mcount; k < c; ++k) {
-      answer.words[k] = words[k];
+      newWords[k] = words[k];
     }
     const c2 = otherWords.length;
     for (k = mcount; k < c2; ++k) {
-      answer.words[k] = otherWords[k];
+      newWords[k] = otherWords[k];
     }
-    return answer;
+    return new TypedFastBitSet(undefined, newWords);
   }
 
   // Computes the number of changed elements between this bitset and another one
@@ -552,22 +551,21 @@ export class TypedFastBitSet implements BitSet {
   new_union(otherbitmap: BitSet) {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const answer = Object.create(TypedFastBitSet.prototype);
     const count = Math.max(words.length, otherWords.length);
-    answer.words = new Uint32Array(count);
+    const newWords = new Uint32Array(count);
     const mcount = Math.min(words.length, otherWords.length);
     for (let k = 0; k < mcount; ++k) {
-      answer.words[k] = words[k] | otherWords[k];
+      newWords[k] = words[k] | otherWords[k];
     }
     const c = words.length;
     for (let k = mcount; k < c; ++k) {
-      answer.words[k] = words[k];
+      newWords[k] = words[k];
     }
     const c2 = otherWords.length;
     for (let k = mcount; k < c2; ++k) {
-      answer.words[k] = otherWords[k];
+      newWords[k] = otherWords[k];
     }
-    return answer;
+    return new TypedFastBitSet(undefined, newWords);
   }
 
   // Computes the size union between this bitset and another one

@@ -15,9 +15,9 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc",
+    "build:package": "tsc -p tsconfig.build.json",
     "test": "node --expose-gc ./node_modules/jest/bin/jest",
-    "package": "tsc -p tsconfig.build.json",
-    "release": "npm run package && node --expose-gc ./node_modules/jest/bin/jest && release-it"
+    "release": "npm run build:package && npm run test && release-it"
   },
   "license": "Apache-2.0",
   "bugs": {

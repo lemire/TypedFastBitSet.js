@@ -11,10 +11,6 @@
  * The largest set value is used when converting into a bitset to correctly size new Array
  * Once more than 256 entries have been added structure will convert to a bitset if it will create a smaller array
  * Very sparse data will remain an array until 1024 entries where it will convert to a bitset
- *
- *
- *
- *
  */
 
 import { BitSet, hammingWeight, hammingWeight4 } from "./utils";
@@ -55,9 +51,11 @@ function isIterable(
   }
   return false;
 }
-// you can provide an iterable
-// an exception is thrown if typed arrays are not supported
 
+/**
+ * you can provide an iterable
+ * an exception is thrown if typed arrays are not supported
+ */
 export class SparseTypedFastBitSet implements BitSet {
   // -1 means we are bitset
   private arraySize = 0;
@@ -94,14 +92,16 @@ export class SparseTypedFastBitSet implements BitSet {
     return newWords;
   }
 
-  // Add the value (Set the bit at index to true)
-  add(index: number) {
+  /**
+   * Add the value (Set the bit at index to true)
+   */
+  add(index: number): void {
     const type = this.resize(index);
     if (type === Type.ARRAY) {
       const array = this.data;
 
       // zero will match the fill value so make sure match is within set area
-      //store biggest index first just for resize help
+      // store biggest index first just for resize help
       if (this.arraySize === 0) {
         array[this.arraySize++] = index;
         return;
@@ -121,8 +121,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // If the value was not in the set, add it, otherwise remove it (flip bit at index)
-  flip(index: number) {
+  /**
+   * If the value was not in the set, add it, otherwise remove it (flip bit at index)
+   */
+  flip(index: number): void {
     const type = this.resize(index);
     if (type === Type.ARRAY) {
       const array = this.data;
@@ -156,14 +158,18 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Remove all values, reset memory usage
-  clear() {
+  /**
+   * Remove all values, reset memory usage
+   */
+  clear(): void {
     this.arraySize = 0;
     this.data = new Uint32Array(8);
   }
 
-  // Set the bit at index to false
-  remove(index: number) {
+  /**
+   * Set the bit at index to false
+   */
+  remove(index: number): void {
     const type = this.resize(index);
     if (type === Type.ARRAY) {
       const array = this.data;
@@ -192,8 +198,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Set bits from start (inclusive) to end (exclusive)
-  addRange(start: number, end: number) {
+  /**
+   * Set bits from start (inclusive) to end (exclusive)
+   */
+  addRange(start: number, end: number): void {
     if (start >= end) {
       return;
     }
@@ -240,8 +248,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Remove bits from start (inclusive) to end (exclusive)
-  removeRange(start: number, end: number) {
+  /**
+   * Remove bits from start (inclusive) to end (exclusive)
+   */
+  removeRange(start: number, end: number): void {
     if (start >= end) {
       return;
     }
@@ -289,8 +299,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Return true if no bit is set
-  isEmpty() {
+  /**
+   * @returns true if no bit is set
+   */
+  isEmpty(): boolean {
     if (this.arraySize === 0) {
       return true;
     }
@@ -305,8 +317,10 @@ export class SparseTypedFastBitSet implements BitSet {
     return true;
   }
 
-  // Is the value contained in the set? Is the bit at index true or false? Returns a boolean
-  has(index: number) {
+  /**
+   * Is the value contained in the set? Is the bit at index true or false?
+   */
+  has(index: number): boolean {
     if (this.arraySize === -1) {
       return (this.data[index >>> 5] & (1 << index)) !== 0;
     } else {
@@ -315,9 +329,12 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Tries to add the value (Set the bit at index to true), return 1 if the
-  // value was added, return 0 if the value was already present
-  checkedAdd(index: number) {
+  /**
+   * Tries to add the value (Set the bit at index to true)
+   *
+   * @returns 1 if the value was added, 0 if the value was already present
+   */
+  checkedAdd(index: number): 1 | 0 {
     const type = this.resize(index);
     if (type === Type.ARRAY) {
       const array = this.data;
@@ -346,8 +363,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Reduce the memory usage to a minimum
-  trim() {
+  /**
+   * Reduce the memory usage to a minimum
+   */
+  trim(): void {
     const size = this.size();
     if (this.arraySize === -1) {
       const words = this.data;
@@ -355,7 +374,7 @@ export class SparseTypedFastBitSet implements BitSet {
       while (nl > 0 && words[nl - 1] === 0) {
         nl--;
       }
-      //sparse array will be smaller
+      // sparse array will be smaller
       if (size < nl) {
         const newArray = new Uint32Array(size);
         let pos = 0 | 0;
@@ -379,7 +398,7 @@ export class SparseTypedFastBitSet implements BitSet {
         this.data = words.slice(0, nl);
       }
     } else {
-      //dense bitset will be smaller
+      // dense bitset will be smaller
       if (this.arraySize > 0 && this.data[0] >>> 5 < size) {
         const count = (this.data[0] + 32) >>> 5;
         const newWords = new Uint32Array(count);
@@ -395,7 +414,9 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Resize the bitset so that we can write a value at index
+  /**
+   * Resize the bitset so that we can write a value at index
+   */
   resize(index: number, capacity = 0): Type.ARRAY | Type.BITSET {
     if (this.arraySize === -1) {
       const words = this.data;
@@ -442,8 +463,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // How many values stored in the set? How many set bits?
-  size() {
+  /**
+   * How many values stored in the set? How many set bits?
+   */
+  size(): number {
     if (this.arraySize === -1) {
       const words = this.data;
       let answer = 0;
@@ -467,7 +490,9 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Return an array with the set bit locations (values)
+  /**
+   * @returns the set bit locations (values)
+   */
   array(): number[] {
     if (this.arraySize === -1) {
       const words = this.data;
@@ -493,8 +518,7 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Return an array with the set bit locations (values)
-  forEach(fnc: (id: number) => void) {
+  forEach(fnc: (id: number) => void): void {
     if (this.arraySize === -1) {
       const words = this.data;
       const c = words.length;
@@ -518,8 +542,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Returns an iterator of set bit locations (values)
-  *[Symbol.iterator]() {
+  /**
+   * Iterator of set bit locations (values)
+   */
+  *[Symbol.iterator](): IterableIterator<number> {
     if (this.arraySize === -1) {
       const words = this.data;
       const c = words.length;
@@ -543,8 +569,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Creates a copy of this bitmap
-  clone() {
+  /**
+   * Creates a copy of this bitmap
+   */
+  clone(): SparseTypedFastBitSet {
     const bitset = new SparseTypedFastBitSet(
       undefined,
       new Uint32Array(this.data)
@@ -553,8 +581,10 @@ export class SparseTypedFastBitSet implements BitSet {
     return bitset;
   }
 
-  // Check if this bitset intersects with another one,
-  // no bitmap is modified
+  /**
+   * Check if this bitset intersects with another one,
+   * no bitmap is modified
+   */
   intersects(otherbitmap: BitSet): boolean {
     const order = SparseTypedFastBitSet.order(this, otherbitmap);
 
@@ -580,8 +610,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the intersection between this bitset and another one,
-  // the current bitmap is modified  (and returned by the function)
+  /**
+   * Computes the intersection between this bitset and another one,
+   * the current bitmap is modified  (and returned by the function)
+   */
   intersection(otherbitmap: BitSet): BitSet {
     if (this.arraySize === -1) {
       if (
@@ -612,7 +644,7 @@ export class SparseTypedFastBitSet implements BitSet {
         return this;
       } else {
         const newWord = new Uint32Array(otherbitmap.data.length);
-        //iterate through target as it will be smaller
+        // iterate through target as it will be smaller
         const otherArray = otherbitmap.data;
         let newSize = 0;
         for (let i = 0; i < otherbitmap.arraySize; i++) {
@@ -647,8 +679,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the size of the intersection between this bitset and another one
-  intersection_size(otherbitmap: BitSet) {
+  /**
+   * Computes the size of the intersection between this bitset and another one
+   */
+  intersection_size(otherbitmap: BitSet): number {
     const order = SparseTypedFastBitSet.order(this, otherbitmap);
 
     switch (order.type) {
@@ -676,8 +710,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the intersection between this bitset and another one,
-  // a new bitmap is generated
+  /**
+   * Computes the intersection between this bitset and another one,
+   * a new bitmap is generated
+   */
   new_intersection(otherbitmap: BitSet): BitSet {
     const order = SparseTypedFastBitSet.order(this, otherbitmap);
 
@@ -708,7 +744,7 @@ export class SparseTypedFastBitSet implements BitSet {
       case Type.MIXED:
       case Type.ARRAY: {
         const newArray = new Uint32Array(order.first.data.length);
-        //iterate through target as it will be smaller
+        // iterate through target as it will be smaller
         let newSize = 0;
         const array = order.first.data;
         for (let i = 0; i < order.first.arraySize; i++) {
@@ -729,9 +765,11 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the intersection between this bitset and another one,
-  // the current bitmap is modified
-  equals(otherbitmap: BitSet) {
+  /**
+   * Computes the intersection between this bitset and another one,
+   * the current bitmap is modified
+   */
+  equals(otherbitmap: BitSet): boolean {
     if (this === otherbitmap) {
       return true;
     }
@@ -773,8 +811,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the difference between this bitset and another one,
-  // the current bitset is modified (and returned by the function)
+  /**
+   * Computes the difference between this bitset and another one,
+   * the current bitset is modified (and returned by the function)
+   */
   difference(otherbitmap: BitSet): BitSet {
     if (this.arraySize === -1) {
       if (
@@ -840,11 +880,13 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the difference between this bitset and another one,
-  // the other bitset is modified (and returned by the function)
-  // (for this set A and other set B,
-  //   this computes B = A - B  and returns B)
-  difference2(otherbitmap: BitSet) {
+  /**
+   * Computes the difference between this bitset and another one,
+   * the other bitset is modified (and returned by the function)
+   *
+   * (for this set A and other set B, this computes B = A - B  and returns B)
+   */
+  difference2(otherbitmap: BitSet): SparseTypedFastBitSet | BitSet {
     if (
       this.arraySize === -1 ||
       !(otherbitmap instanceof SparseTypedFastBitSet)
@@ -904,13 +946,17 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the difference between this bitset and another one,
-  // a new bitmap is generated
-  new_difference(otherbitmap: BitSet) {
+  /**
+   * Computes the difference between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_difference(otherbitmap: BitSet): BitSet {
     return this.clone().difference(otherbitmap);
   }
 
-  // Computes the size of the difference between this bitset and another one
+  /**
+   * Computes the size of the difference between this bitset and another one
+   */
   difference_size(otherbitmap: BitSet): number {
     if (this.arraySize === -1) {
       if (
@@ -954,9 +1000,11 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the changed elements (XOR) between this bitset and another one,
-  // the current bitset is modified (and returned by the function)
-  change(otherbitmap: BitSet) {
+  /**
+   * Computes the changed elements (XOR) between this bitset and another one,
+   * the current bitset is modified (and returned by the function)
+   */
+  change(otherbitmap: BitSet): this {
     if (this.arraySize === -1) {
       if (
         !(otherbitmap instanceof SparseTypedFastBitSet) ||
@@ -1043,9 +1091,11 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the change between this bitset and another one,
-  // a new bitmap is generated
-  new_change(otherbitmap: BitSet) {
+  /**
+   * Computes the change between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_change(otherbitmap: BitSet): SparseTypedFastBitSet {
     const order = SparseTypedFastBitSet.order(this, otherbitmap);
 
     switch (order.type) {
@@ -1112,7 +1162,7 @@ export class SparseTypedFastBitSet implements BitSet {
           order.first.data.length + order.second.data.length
         );
         newArray.set(order.second.data);
-        //iterate through target as it will be smaller
+        // iterate through target as it will be smaller
         let newSize = order.second.arraySize;
         const array = order.first.data;
         for (let i = 0; i < order.first.arraySize; i++) {
@@ -1145,8 +1195,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the number of changed elements between this bitset and another one
-  change_size(otherbitmap: BitSet) {
+  /**
+   * Computes the number of changed elements between this bitset and another one
+   */
+  change_size(otherbitmap: BitSet): number {
     const order = SparseTypedFastBitSet.order(this, otherbitmap);
 
     switch (order.type) {
@@ -1182,7 +1234,7 @@ export class SparseTypedFastBitSet implements BitSet {
         return answer;
       }
       case Type.ARRAY: {
-        //iterate through target as it will be smaller
+        // iterate through target as it will be smaller
         let answer = order.second.arraySize;
         const array = order.first.data;
         for (let i = 0; i < order.first.arraySize; i++) {
@@ -1198,14 +1250,18 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Returns a string representation
-  toString() {
+  /**
+   * @returns a string representation
+   */
+  toString(): string {
     return "{" + this.array().join(",") + "}";
   }
 
-  // Computes the union between this bitset and another one,
-  // the current bitset is modified  (and returned by the function)
-  union(otherbitmap: BitSet) {
+  /**
+   * Computes the union between this bitset and another one,
+   * the current bitset is modified  (and returned by the function)
+   */
+  union(otherbitmap: BitSet): this {
     if (
       !(otherbitmap instanceof SparseTypedFastBitSet) ||
       otherbitmap.arraySize === -1
@@ -1250,9 +1306,11 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the union between this bitset and another one,
-  // a new bitmap is generated
-  new_union(otherbitmap: BitSet) {
+  /**
+   * Computes the union between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_union(otherbitmap: BitSet): SparseTypedFastBitSet {
     if (
       !(otherbitmap instanceof SparseTypedFastBitSet) ||
       otherbitmap.arraySize === -1
@@ -1292,8 +1350,10 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  // Computes the size union between this bitset and another one
-  union_size(otherbitmap: BitSet) {
+  /**
+   * Computes the size union between this bitset and another one
+   */
+  union_size(otherbitmap: BitSet): number {
     const order = SparseTypedFastBitSet.order(this, otherbitmap);
     switch (order.type) {
       case Type.BITSET: {
@@ -1331,7 +1391,9 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  //will put array based one first and return type if both array smallest first
+  /**
+   * will put array based one first and return type if both array smallest first
+   */
   private static order(first: BitSet, second: BitSet): OrderResponse {
     if (!(first instanceof SparseTypedFastBitSet) || first.arraySize === -1) {
       if (

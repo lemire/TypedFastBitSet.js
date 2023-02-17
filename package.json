@@ -16,8 +16,8 @@
   "scripts": {
     "build": "tsc",
     "test": "node --expose-gc ./node_modules/jest/bin/jest",
-    "package": "tsc -p tsconfig.json",
-    "release": "tsc -p tsconfig.json && node --expose-gc ./node_modules/jest/bin/jest && release-it"
+    "package": "tsc -p tsconfig.build.json",
+    "release": "npm run package && node --expose-gc ./node_modules/jest/bin/jest && release-it"
   },
   "license": "Apache-2.0",
   "bugs": {

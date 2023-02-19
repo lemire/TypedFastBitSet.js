@@ -886,7 +886,7 @@ export class SparseTypedFastBitSet implements BitSet {
    *
    * (for this set A and other set B, this computes B = A - B  and returns B)
    */
-  difference2(otherbitmap: BitSet): SparseTypedFastBitSet | BitSet {
+  difference2<T extends BitSet>(otherbitmap: T): T {
     if (
       this.arraySize === -1 ||
       !(otherbitmap instanceof SparseTypedFastBitSet)

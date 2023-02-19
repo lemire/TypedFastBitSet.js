@@ -138,5 +138,14 @@ bitsetTest(({ name, build, arrayEqual }) => {
       mb2.difference2(mb1);
       expect(mb1.size()).toBe(2); // bad diff2
     });
+
+    it("difference2 the same prototype provided", () => {
+      const a1 = [1, 2, 4, 5, 10];
+      const a2 = [1, 2, 4, 5, 10, 100, 1000];
+      const mb1 = build(a1);
+      const mb2 = build(a2);
+      const mb3 = mb1.difference2(mb2);
+      expect(mb3.constructor).toStrictEqual(mb2.constructor);
+    });
   });
 });

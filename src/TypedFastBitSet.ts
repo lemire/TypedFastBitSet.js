@@ -30,7 +30,7 @@
  *  c.intersection(b); // c will only contain elements that are in both c and b
  *  c = b.clone(); // create a (deep) copy of b and assign it to c.
  *  c.equals(b); // check whether c and b are equal
-
+ *
  *   See README.md file for a more complete description.
  *
  * You can install the library under node with the command line
@@ -47,11 +47,12 @@ function isIterable(
   }
   return false;
 }
-// you can provide an iterable
-// an exception is thrown if typed arrays are not supported
 
+/**
+ * you can provide an iterable
+ * an exception is thrown if typed arrays are not supported
+ */
 export class TypedFastBitSet implements BitSet {
-  //constructor
   constructor(
     iterable?: Iterable<number> | null,
     public words = new Uint32Array(8)
@@ -63,37 +64,48 @@ export class TypedFastBitSet implements BitSet {
     }
   }
 
-  // Returns a new TypedFastBitset given a Uint32Array
-  // of words
-  static fromWords(words: Uint32Array) {
+  /**
+   * @returns a new TypedFastBitset given a Uint32Array of words
+   */
+  static fromWords(words: Uint32Array): TypedFastBitSet {
     return new TypedFastBitSet(undefined, words);
   }
 
-  // Add the value (Set the bit at index to true)
-  add(index: number) {
+  /**
+   * Add the value (Set the bit at index to true)
+   */
+  add(index: number): void {
     this.resize(index);
     this.words[index >>> 5] |= 1 << index;
   }
 
-  // If the value was not in the set, add it, otherwise remove it (flip bit at index)
-  flip(index: number) {
+  /**
+   *  If the value was not in the set, add it, otherwise remove it (flip bit at index)
+   */
+  flip(index: number): void {
     this.resize(index);
     this.words[index >>> 5] ^= 1 << index;
   }
 
-  // Remove all values, reset memory usage
-  clear() {
+  /**
+   * Remove all values, reset memory usage
+   */
+  clear(): void {
     this.words = new Uint32Array(8);
   }
 
-  // Set the bit at index to false
-  remove(index: number) {
+  /**
+   * Set the bit at index to false
+   */
+  remove(index: number): void {
     this.resize(index);
     this.words[index >>> 5] &= ~(1 << index);
   }
 
-  // Set bits from start (inclusive) to end (exclusive)
-  addRange(start: number, end: number) {
+  /**
+   * Set bits from start (inclusive) to end (exclusive)
+   */
+  addRange(start: number, end: number): void {
     if (start >= end) {
       return;
     }
@@ -115,8 +127,10 @@ export class TypedFastBitSet implements BitSet {
     words[endword] |= ~0 >>> -end;
   }
 
-  // Remove bits from start (inclusive) to end (exclusive)
-  removeRange(start: number, end: number) {
+  /**
+   * Remove bits from start (inclusive) to end (exclusive)
+   */
+  removeRange(start: number, end: number): void {
     const words = this.words;
     start = Math.min(start, (words.length << 5) - 1);
     end = Math.min(end, (words.length << 5) - 1);
@@ -136,8 +150,10 @@ export class TypedFastBitSet implements BitSet {
     words[endword] &= ~(~0 >>> -end);
   }
 
-  // Return true if no bit is set
-  isEmpty() {
+  /**
+   * @returns true if no bit is set
+   */
+  isEmpty(): boolean {
     const words = this.words;
     const c = words.length;
     for (let i = 0; i < c; i++) {
@@ -146,14 +162,19 @@ export class TypedFastBitSet implements BitSet {
     return true;
   }
 
-  // Is the value contained in the set? Is the bit at index true or false? Returns a boolean
-  has(index: number) {
+  /**
+   * Is the value contained in the set? Is the bit at index true or false?
+   */
+  has(index: number): boolean {
     return (this.words[index >>> 5] & (1 << index)) !== 0;
   }
 
-  // Tries to add the value (Set the bit at index to true), return 1 if the
-  // value was added, return 0 if the value was already present
-  checkedAdd(index: number) {
+  /**
+   * Tries to add the value (Set the bit at index to true)
+   *
+   * @returns 1 if the value was added, 0 if the value was already present
+   */
+  checkedAdd(index: number): 0 | 1 {
     const words = this.words;
     this.resize(index);
     const word = words[index >>> 5];
@@ -162,8 +183,10 @@ export class TypedFastBitSet implements BitSet {
     return ((newword ^ word) >>> index) as 0 | 1;
   }
 
-  // Reduce the memory usage to a minimum
-  trim() {
+  /**
+   * Reduce the memory usage to a minimum
+   */
+  trim(): void {
     const words = this.words;
     let nl = words.length;
     while (nl > 0 && words[nl - 1] === 0) {
@@ -172,8 +195,10 @@ export class TypedFastBitSet implements BitSet {
     this.words = words.slice(0, nl);
   }
 
-  // Resize the bitset so that we can write a value at index
-  resize(index: number) {
+  /**
+   * Resize the bitset so that we can write a value at index
+   */
+  resize(index: number): void {
     const words = this.words;
     if (words.length << 5 > index) return;
     const count = (index + 32) >>> 5; // just what is needed
@@ -182,8 +207,10 @@ export class TypedFastBitSet implements BitSet {
     this.words = newwords;
   }
 
-  // How many values stored in the set? How many set bits?
-  size() {
+  /**
+   * @returns How many values stored in the set? How many set bits?
+   */
+  size(): number {
     const words = this.words;
     let answer = 0;
     const c = words.length;
@@ -203,10 +230,12 @@ export class TypedFastBitSet implements BitSet {
     return answer;
   }
 
-  // Return an array with the set bit locations (values)
-  array() {
+  /**
+   * @returns an array with the set bit locations (values)
+   */
+  array(): number[] {
     const words = this.words;
-    const answer = new Array(this.size());
+    const answer: number[] = new Array(this.size());
     let pos = 0 | 0;
     const c = words.length;
     for (let k = 0; k < c; ++k) {
@@ -220,8 +249,7 @@ export class TypedFastBitSet implements BitSet {
     return answer;
   }
 
-  // Return an array with the set bit locations (values)
-  forEach(fnc: (id: number) => void) {
+  forEach(fnc: (id: number) => void): void {
     const words = this.words;
     const c = words.length;
     for (let k = 0; k < c; ++k) {
@@ -234,8 +262,10 @@ export class TypedFastBitSet implements BitSet {
     }
   }
 
-  // Returns an iterator of set bit locations (values)
-  *[Symbol.iterator]() {
+  /**
+   * Iterator of set bit locations (values)
+   */
+  *[Symbol.iterator](): IterableIterator<number> {
     const words = this.words;
     const c = words.length;
     for (let k = 0; k < c; ++k) {
@@ -248,14 +278,18 @@ export class TypedFastBitSet implements BitSet {
     }
   }
 
-  // Creates a copy of this bitmap
-  clone() {
+  /**
+   * @returns a copy of this bitmap
+   */
+  clone(): TypedFastBitSet {
     return TypedFastBitSet.fromWords(new Uint32Array(this.words));
   }
 
-  // Check if this bitset intersects with another one,
-  // no bitmap is modified
-  intersects(otherbitmap: BitSet) {
+  /**
+   * Check if this bitset intersects with another one,
+   * no bitmap is modified
+   */
+  intersects(otherbitmap: BitSet): boolean {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const newcount = Math.min(words.length, otherWords.length);
@@ -265,9 +299,11 @@ export class TypedFastBitSet implements BitSet {
     return false;
   }
 
-  // Computes the intersection between this bitset and another one,
-  // the current bitmap is modified  (and returned by the function)
-  intersection(otherbitmap: BitSet) {
+  /**
+   * Computes the intersection between this bitset and another one,
+   * the current bitmap is modified (and returned by the function)
+   */
+  intersection(otherbitmap: BitSet): this {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const newcount = Math.min(words.length, otherWords.length);
@@ -292,8 +328,10 @@ export class TypedFastBitSet implements BitSet {
     return this;
   }
 
-  // Computes the size of the intersection between this bitset and another one
-  intersection_size(otherbitmap: BitSet) {
+  /**
+   * Computes the size of the intersection between this bitset and another one
+   */
+  intersection_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const newcount = Math.min(words.length, otherWords.length);
@@ -304,9 +342,11 @@ export class TypedFastBitSet implements BitSet {
     return answer;
   }
 
-  // Computes the intersection between this bitset and another one,
-  // a new bitmap is generated
-  new_intersection(otherbitmap: BitSet) {
+  /**
+   * Computes the intersection between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_intersection(otherbitmap: BitSet): TypedFastBitSet {
     const words = this.words;
     const otherWords = otherbitmap.words;
 
@@ -329,9 +369,11 @@ export class TypedFastBitSet implements BitSet {
     return new TypedFastBitSet(undefined, newWords);
   }
 
-  // Computes the intersection between this bitset and another one,
-  // the current bitmap is modified
-  equals(otherbitmap: BitSet) {
+  /**
+   * Computes the intersection between this bitset and another one,
+   * the current bitmap is modified
+   */
+  equals(otherbitmap: BitSet): boolean {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const mcount = Math.min(words.length, otherWords.length);
@@ -352,9 +394,11 @@ export class TypedFastBitSet implements BitSet {
     return true;
   }
 
-  // Computes the difference between this bitset and another one,
-  // the current bitset is modified (and returned by the function)
-  difference(otherbitmap: BitSet) {
+  /**
+   * Computes the difference between this bitset and another one,
+   * the current bitset is modified (and returned by the function)
+   */
+  difference(otherbitmap: BitSet): this {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const newcount = Math.min(words.length, otherWords.length);
@@ -375,11 +419,13 @@ export class TypedFastBitSet implements BitSet {
     return this;
   }
 
-  // Computes the difference between this bitset and another one,
-  // the other bitset is modified (and returned by the function)
-  // (for this set A and other set B,
-  //   this computes B = A - B  and returns B)
-  difference2(otherbitmap: BitSet) {
+  /**
+   * Computes the difference between this bitset and another one,
+   * the other bitset is modified (and returned by the function)
+   *
+   * (for this set A and other set B, this computes B = A - B  and returns B)
+   */
+  difference2(otherbitmap: BitSet): BitSet {
     const mincount = Math.min(this.words.length, otherbitmap.words.length);
     otherbitmap.resize((this.words.length << 5) - 1);
 
@@ -407,14 +453,18 @@ export class TypedFastBitSet implements BitSet {
     return otherbitmap;
   }
 
-  // Computes the difference between this bitset and another one,
-  // a new bitmap is generated
-  new_difference(otherbitmap: BitSet) {
+  /**
+   * Computes the difference between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_difference(otherbitmap: BitSet): TypedFastBitSet {
     return this.clone().difference(otherbitmap); // should be fast enough
   }
 
-  // Computes the size of the difference between this bitset and another one
-  difference_size(otherbitmap: BitSet) {
+  /**
+   * Computes the size of the difference between this bitset and another one
+   */
+  difference_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const newcount = Math.min(words.length, otherWords.length);
@@ -430,9 +480,11 @@ export class TypedFastBitSet implements BitSet {
     return answer;
   }
 
-  // Computes the changed elements (XOR) between this bitset and another one,
-  // the current bitset is modified (and returned by the function)
-  change(otherbitmap: BitSet) {
+  /**
+   * Computes the changed elements (XOR) between this bitset and another one,
+   * the current bitset is modified (and returned by the function)
+   */
+  change(otherbitmap: BitSet): this {
     const otherWords = otherbitmap.words;
     const mincount = Math.min(this.words.length, otherWords.length);
     this.resize((otherWords.length << 5) - 1);
@@ -458,9 +510,11 @@ export class TypedFastBitSet implements BitSet {
     return this;
   }
 
-  // Computes the change between this bitset and another one,
-  // a new bitmap is generated
-  new_change(otherbitmap: BitSet) {
+  /**
+   * Computes the change between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_change(otherbitmap: BitSet): TypedFastBitSet {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const count = Math.max(words.length, otherWords.length);
@@ -492,8 +546,10 @@ export class TypedFastBitSet implements BitSet {
     return new TypedFastBitSet(undefined, newWords);
   }
 
-  // Computes the number of changed elements between this bitset and another one
-  change_size(otherbitmap: BitSet) {
+  /**
+   * Computes the number of changed elements between this bitset and another one
+   */
+  change_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const mincount = Math.min(words.length, otherWords.length);
@@ -510,14 +566,18 @@ export class TypedFastBitSet implements BitSet {
     return answer;
   }
 
-  // Returns a string representation
-  toString() {
+  /**
+   * @returns a string representation
+   */
+  toString(): string {
     return "{" + this.array().join(",") + "}";
   }
 
-  // Computes the union between this bitset and another one,
-  // the current bitset is modified  (and returned by the function)
-  union(otherbitmap: BitSet) {
+  /**
+   * Computes the union between this bitset and another one,
+   * the current bitset is modified  (and returned by the function)
+   */
+  union(otherbitmap: BitSet): this {
     let words = this.words;
     const otherWords = otherbitmap.words;
     const mcount = Math.min(words.length, otherWords.length);
@@ -546,9 +606,11 @@ export class TypedFastBitSet implements BitSet {
     return this;
   }
 
-  // Computes the union between this bitset and another one,
-  // a new bitmap is generated
-  new_union(otherbitmap: BitSet) {
+  /**
+   * Computes the union between this bitset and another one,
+   * a new bitmap is generated
+   */
+  new_union(otherbitmap: BitSet): TypedFastBitSet {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const count = Math.max(words.length, otherWords.length);
@@ -568,8 +630,10 @@ export class TypedFastBitSet implements BitSet {
     return new TypedFastBitSet(undefined, newWords);
   }
 
-  // Computes the size union between this bitset and another one
-  union_size(otherbitmap: BitSet) {
+  /**
+   * Computes the size union between this bitset and another one
+   */
+  union_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
     const mcount = Math.min(words.length, otherWords.length);

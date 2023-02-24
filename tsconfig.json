@@ -2,9 +2,13 @@
   "compilerOptions": {
     "target": "es5",
     "module": "commonjs",
+    "declaration": true,
+    "noEmit": true,
+    "pretty": true,
+    "sourceMap": true,
+
     "outDir": "lib",
     "rootDir": "src",
-    "declaration": true,
 
     "lib": ["esnext"],
 
@@ -12,10 +16,7 @@
     "downlevelIteration": true,
     "esModuleInterop": true,
     "moduleResolution": "node",
-    "removeComments": false,
-    "sourceMap": true,
-    "stripInternal": true
+    "removeComments": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["src/**/*.spec.*"]
+  "include": ["src/**/*"]
 }

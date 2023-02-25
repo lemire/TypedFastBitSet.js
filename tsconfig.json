@@ -1,14 +1,22 @@
 {
   "compilerOptions": {
     "target": "es5",
-    "lib": ["ESNext"],
     "module": "commonjs",
     "declaration": true,
+    "noEmit": true,
+    "pretty": true,
+    "sourceMap": true,
+
     "outDir": "lib",
-    "strict": false,
-    "stripInternal": true,
-    "removeComments": true,
-    "esModuleInterop": true
+    "rootDir": "src",
+
+    "lib": ["esnext"],
+
+    "strict": true,
+    "downlevelIteration": true,
+    "esModuleInterop": true,
+    "moduleResolution": "node",
+    "removeComments": false
   },
-  "include": ["unit"]
+  "include": ["src/**/*"]
 }

@@ -1,0 +1,16 @@
+name: Test
+on: push
+jobs:
+  test:
+    timeout-minutes: 15
+    env:
+      CI: true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - name: build
+        run: npm run build
+      - name: test
+        run: npm run test

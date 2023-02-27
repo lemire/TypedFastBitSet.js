@@ -73,7 +73,6 @@ This implementation starts as an array of values and switches to a bitset struct
 
 Using node.js (npm), you can test the code as follows...
 
-      $ npm install mocha
       $ npm test
 
 # Is it faster?

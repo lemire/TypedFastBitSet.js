@@ -265,17 +265,33 @@ export class TypedFastBitSet implements BitSet {
   /**
    * Iterator of set bit locations (values)
    */
-  *[Symbol.iterator](): IterableIterator<number> {
+  [Symbol.iterator](): IterableIterator<number> {
     const words = this.words;
     const c = words.length;
-    for (let k = 0; k < c; ++k) {
-      let w = words[k];
-      while (w != 0) {
-        const t = w & -w;
-        yield (k << 5) + hammingWeight((t - 1) | 0);
-        w ^= t;
-      }
-    }
+    let k = 0;
+    let w = words[k];
+
+    return {
+      [Symbol.iterator]() {
+        return this;
+      },
+      next() {
+        while (k < c) {
+          if (w !== 0) {
+            const t = w & -w;
+            const value = (k << 5) + hammingWeight((t - 1) | 0);
+            w ^= t;
+            return { done: false, value };
+          } else {
+            k++;
+            if (k < c) {
+              w = words[k];
+            }
+          }
+        }
+        return { done: true, value: undefined };
+      },
+    };
   }
 
   /**

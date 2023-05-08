@@ -545,27 +545,57 @@ export class SparseTypedFastBitSet implements BitSet {
   /**
    * Iterator of set bit locations (values)
    */
-  *[Symbol.iterator](): IterableIterator<number> {
+  [Symbol.iterator](): IterableIterator<number> {
     if (this.arraySize === -1) {
       const words = this.data;
       const c = words.length;
-      for (let k = 0; k < c; ++k) {
-        let w = words[k];
-        while (w != 0) {
-          const t = w & -w;
-          yield (k << 5) + hammingWeight((t - 1) | 0);
-          w ^= t;
-        }
-      }
+      let k = 0;
+      let w = words[k];
+
+      return {
+        [Symbol.iterator]() {
+          return this;
+        },
+        next() {
+          while (k < c) {
+            if (w !== 0) {
+              const t = w & -w;
+              const value = (k << 5) + hammingWeight((t - 1) | 0);
+              w ^= t;
+              return { done: false, value };
+            } else {
+              k++;
+              if (k < c) {
+                w = words[k];
+              }
+            }
+          }
+          return { done: true, value: undefined };
+        },
+      };
     } else {
       const array = this.data;
-      for (let i = 0; i < this.arraySize; i++) {
-        const v = array[i];
-        yield v;
-        if (v !== array[i]) {
-          i--;
-        }
-      }
+      const arraySize = this.arraySize;
+      let i = 0;
+
+      return {
+        [Symbol.iterator]() {
+          return this;
+        },
+        next() {
+          if (i < arraySize) {
+            const v = array[i];
+            const result = { done: false, value: v };
+            if (v !== array[i]) {
+              i--;
+            }
+            i++;
+            return result;
+          } else {
+            return { done: true, value: undefined };
+          }
+        },
+      };
     }
   }
 

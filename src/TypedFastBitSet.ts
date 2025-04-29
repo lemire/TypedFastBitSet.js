@@ -170,6 +170,25 @@ export class TypedFastBitSet implements BitSet {
   }
 
   /**
+   * Is any value of the range contained in the set?
+   */
+  hasAnyInRange(start: number, end: number): boolean {
+    const words = this.words;
+    start = Math.min(start, (words.length << 5) - 1);
+    end = Math.min(end, (words.length << 5) - 1);
+
+    if (start >= end) return false;
+
+    const firstword = start >> 5;
+    const endword = (end - 1) >> 5;
+
+    if (firstword === endword) return (words[firstword] & (1 << firstword)) !== 0;
+    for (let index = firstword + 1; index < endword; index++)
+      if (words[index] !== 0) return true;
+    return (words[endword] & (1 << endword)) !== 0;
+  }
+
+  /**
    * Tries to add the value (Set the bit at index to true)
    *
    * @returns 1 if the value was added, 0 if the value was already present

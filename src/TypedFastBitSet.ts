@@ -170,22 +170,21 @@ export class TypedFastBitSet implements BitSet {
   }
 
   /**
-   * Is any value of the range contained in the set?
+   * Is any value of the (exclusive) range contained in the set?
    */
   hasAnyInRange(start: number, end: number): boolean {
+    if (start >= end) return false;
     const words = this.words;
     start = Math.min(start, (words.length << 5) - 1);
     end = Math.min(end, (words.length << 5) - 1);
-
-    if (start >= end) return false;
-
-    const firstword = start >> 5;
+    const firstword = start >>> 5;
     const endword = (end - 1) >> 5;
-
-    if (firstword === endword) return (words[firstword] & (1 << firstword)) !== 0;
-    for (let index = firstword + 1; index < endword; index++)
+    if (firstword === endword)
+      return (words[firstword] & ((~0 << start) & (~0 >>> -end))) !== 0;
+    if ((words[firstword] & (~0 << start)) !== 0) return true;
+    for (let index = firstword + 1; index < endword - 1; index++)
       if (words[index] !== 0) return true;
-    return (words[endword] & (1 << endword)) !== 0;
+    return (words[endword] & (~0 >>> -end)) !== 0;
   }
 
   /**

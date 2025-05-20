@@ -1,5 +1,6 @@
 import { bitsetTest } from "./testUtils";
 import { SparseTypedFastBitSet } from "./SparseTypedFastBitSet";
+import { TypedFastBitSet } from "./TypedFastBitSet";
 
 describe("sparse biggest logic", () => {
   it("Testing sparse addRange/removeRange", () => {
@@ -22,6 +23,27 @@ describe("sparse biggest logic", () => {
     mb.removeRange(3, 5);
 
     expect(mb.array()).toEqual([2, 0, 1]);
+  });
+});
+
+describe("fixed bitset logic", () => {
+  it("Testing has any in range", () => {
+    const b1 = new TypedFastBitSet();
+    b1.addRange(100, 200);
+    b1.addRange(230, 250);
+    expect(b1.hasAnyInRange(0, 100)).toBe(false); // before
+    expect(b1.hasAnyInRange(200, 204)).toBe(false); // endword === firstword
+    expect(b1.hasAnyInRange(200, 229)).toBe(false); // gaps
+    expect(b1.hasAnyInRange(250, 300)).toBe(false); // after
+    expect(b1.hasAnyInRange(99, 101)).toBe(true); // across start 1
+    expect(b1.hasAnyInRange(99, 140)).toBe(true); // across start 2
+    expect(b1.hasAnyInRange(99, 201)).toBe(true); // across start/end
+    expect(b1.hasAnyInRange(100, 140)).toBe(true); // start
+    expect(b1.hasAnyInRange(100, 200)).toBe(true); // start past end
+    expect(b1.hasAnyInRange(101, 198)).toBe(true); // inside
+    expect(b1.hasAnyInRange(120, 121)).toBe(true); // smol
+    expect(b1.hasAnyInRange(197, 200)).toBe(true); // end
+    expect(b1.hasAnyInRange(199, 210)).toBe(true); // across end
   });
 });
 

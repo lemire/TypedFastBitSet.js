@@ -605,7 +605,7 @@ export class SparseTypedFastBitSet implements BitSet {
   clone(): SparseTypedFastBitSet {
     const bitset = new SparseTypedFastBitSet(
       undefined,
-      new Uint32Array(this.data)
+      new Uint32Array(this.data) // Correction : pas d'annotation générique
     );
     bitset.arraySize = this.arraySize;
     return bitset;

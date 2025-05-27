@@ -1,3 +1,4 @@
+declare const expect: any;
 import { SparseTypedFastBitSet } from "./SparseTypedFastBitSet";
 import { TypedFastBitSet } from "./TypedFastBitSet";
 import { BitSet } from "./utils";

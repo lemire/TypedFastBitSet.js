@@ -215,13 +215,31 @@ export class TypedFastBitSet implements BitSet {
 
   /**
    * Resize the bitset so that we can write a value at index
+   * This may overallocate memory for speed.
    */
   resize(index: number): void {
     const words = this.words;
     if (words.length << 5 > index) return;
-    const count = (index + 32) >>> 5; // just what is needed
+    let count = (index + 32) >>> 5; // just what is needed
+    // we avoid the overflow when shifting by 1
+    if((count << 1) > count) {
+      count <<= 1; // double the size for future growth
+    }
     const newwords = new Uint32Array(count << 1);
     newwords.set(words); // hopefully, this copy is fast
+    this.words = newwords;
+  }
+
+  /**
+   * Resize the bitset to a specific size
+   * This does not overallocate memory.
+   */
+  resizeTo(size: number): void {
+    const words = this.words;
+    const needed = (size + 31) >>> 5;
+    if (words.length >= needed) return;
+    const newwords = new Uint32Array(needed);
+    newwords.set(words);
     this.words = newwords;
   }
 
@@ -461,7 +479,7 @@ export class TypedFastBitSet implements BitSet {
    */
   difference2(otherbitmap: BitSet): BitSet {
     const mincount = Math.min(this.words.length, otherbitmap.words.length);
-    otherbitmap.resize((this.words.length << 5) - 1);
+    otherbitmap.resizeTo((this.words.length << 5) - 1);
 
     const words = this.words;
     const otherWords = otherbitmap.words;
@@ -521,7 +539,7 @@ export class TypedFastBitSet implements BitSet {
   change(otherbitmap: BitSet): this {
     const otherWords = otherbitmap.words;
     const mincount = Math.min(this.words.length, otherWords.length);
-    this.resize((otherWords.length << 5) - 1);
+    this.resizeTo((otherWords.length << 5) - 1);
     const words = this.words;
     let k = 0 | 0;
     for (; k + 7 < mincount; k += 8) {
@@ -630,7 +648,7 @@ export class TypedFastBitSet implements BitSet {
       words[k] |= otherWords[k];
     }
     if (words.length < otherWords.length) {
-      this.resize((otherWords.length << 5) - 1);
+      this.resizeTo((otherWords.length << 5) - 1);
       words = this.words;
       const c = otherWords.length;
       for (k = mcount; k < c; ++k) {

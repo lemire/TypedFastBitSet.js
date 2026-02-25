@@ -250,5 +250,17 @@ bitsetTest(({ name, build, arrayEqual }) => {
       arrayEqual(mb2.array(), a2Range);
       arrayEqual(mb3.array(), a3Range);
     });
+
+    it("Testing cumulative union", () => {
+      const N = 256;
+      const k = 25;
+      const arr = Array.from({ length: k }, (_, i) => build([N - i]));
+      for (let i = 0; i < k - 1; i++) {
+        arr[i + 1].union(arr[i]);
+      }
+      expect(arr[k - 1].size()).toBe(k);
+      const expected = Array.from({ length: k }, (_, i) => N - k + 1 + i);
+      arrayEqual(arr[k - 1].array(), expected);
+    });
   });
 });

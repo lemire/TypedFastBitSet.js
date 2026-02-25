@@ -415,6 +415,13 @@ export class SparseTypedFastBitSet implements BitSet {
   }
 
   /**
+   * Resize the bitset to a specific size
+   */
+  resizeTo(size: number): void {
+    // Sparse implementation doesn't pre-allocate, so no-op
+  }
+
+  /**
    * Resize the bitset so that we can write a value at index
    */
   resize(index: number, capacity = 0): Type.ARRAY | Type.BITSET {

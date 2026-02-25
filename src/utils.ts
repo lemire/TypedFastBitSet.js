@@ -135,6 +135,9 @@ export interface BitSet {
   /** Resize the bitset so that we can write a value at `index` */
   resize(index: number): void;
 
+  /** Resize the bitset to a specific size */
+  resizeTo(size: number): void;
+
   /** How many values stored in the set? How many set bits? */
   size(): number;
 

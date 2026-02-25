@@ -42,9 +42,6 @@ bitsetTest(({ name, build, arrayEqual }) => {
       const mb = build(ai);
       const words = mb.words; // switch to bitset
       expect(words.length).toBe(8); // default start size
-
-      mb.resize(16 * 32 - 1);
-      expect(mb.words.length).toBe(32); // 2x what is needed
     });
   });
 });

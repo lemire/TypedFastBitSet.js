@@ -79,7 +79,7 @@ export class SparseTypedFastBitSet implements BitSet {
     }
   }
 
-  private toBitset(): Uint32Array {
+  private toBitset(): Uint32Array<ArrayBuffer> {
     const array = this.data;
     // currently converts its internal type to bitset
     const count = (array[0] + 32) >>> 5;

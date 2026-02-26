@@ -37,10 +37,43 @@
  *   npm install typedfastbitset
  */
 
-import { BitSet, hammingWeight, hammingWeight4 } from "./utils";
+import { BitSet } from "./utils";
+
+// Local copies of hammingWeight to avoid module import indirection
+// (V8 inlines local functions much better than (0, module.fn)() calls)
+function hammingWeight(v: number) {
+  v -= (v >>> 1) & 0x55555555;
+  v = (v & 0x33333333) + ((v >>> 2) & 0x33333333);
+  return (((v + (v >>> 4)) & 0xf0f0f0f) * 0x1010101) >>> 24;
+}
+
+function hammingWeight4(v1: number, v2: number, v3: number, v4: number) {
+  v1 -= (v1 >>> 1) & 0x55555555;
+  v2 -= (v2 >>> 1) & 0x55555555;
+  v3 -= (v3 >>> 1) & 0x55555555;
+  v4 -= (v4 >>> 1) & 0x55555555;
+
+  v1 = (v1 & 0x33333333) + ((v1 >>> 2) & 0x33333333);
+  v2 = (v2 & 0x33333333) + ((v2 >>> 2) & 0x33333333);
+  v3 = (v3 & 0x33333333) + ((v3 >>> 2) & 0x33333333);
+  v4 = (v4 & 0x33333333) + ((v4 >>> 2) & 0x33333333);
+
+  v1 = (v1 + (v1 >>> 4)) & 0xf0f0f0f;
+  v2 = (v2 + (v2 >>> 4)) & 0xf0f0f0f;
+  v3 = (v3 + (v3 >>> 4)) & 0xf0f0f0f;
+  v4 = (v4 + (v4 >>> 4)) & 0xf0f0f0f;
+  return ((v1 + v2 + v3 + v4) * 0x1010101) >>> 24;
+}
+
+// Get the logical word count of a BitSet.
+// TypedFastBitSet tracks _count separately from words.length;
+// other BitSet implementations use words.length directly.
+function wc(bitmap: BitSet): number {
+  return (bitmap as any)._count ?? bitmap.words.length;
+}
 
 function isIterable(
-  obj: Iterable<number> | null | undefined
+  obj: Iterable<number> | null | undefined,
 ): obj is Iterable<number> {
   if (obj) {
     return obj[Symbol.iterator] !== undefined;
@@ -53,10 +86,19 @@ function isIterable(
  * an exception is thrown if typed arrays are not supported
  */
 export class TypedFastBitSet implements BitSet {
-  constructor(
-    iterable?: Iterable<number> | null,
-    public words = new Uint32Array(8)
-  ) {
+  public words: Uint32Array;
+  // Logical word count. May be less than words.length due to buffer overallocation.
+  // Words beyond _count are guaranteed to be zero.
+  _count: number;
+
+  constructor(iterable?: Iterable<number> | null, words?: Uint32Array) {
+    if (words) {
+      this.words = words;
+      this._count = words.length;
+    } else {
+      this.words = new Uint32Array(8);
+      this._count = 0;
+    }
     if (isIterable(iterable)) {
       for (const key of iterable) {
         this.add(key);
@@ -92,6 +134,7 @@ export class TypedFastBitSet implements BitSet {
    */
   clear(): void {
     this.words = new Uint32Array(8);
+    this._count = 0;
   }
 
   /**
@@ -110,7 +153,7 @@ export class TypedFastBitSet implements BitSet {
       return;
     }
 
-    if (this.words.length << 5 <= end) {
+    if (this._count << 5 <= end) {
       this.resize(end);
     }
     const words = this.words;
@@ -132,8 +175,8 @@ export class TypedFastBitSet implements BitSet {
    */
   removeRange(start: number, end: number): void {
     const words = this.words;
-    start = Math.min(start, (words.length << 5) - 1);
-    end = Math.min(end, (words.length << 5) - 1);
+    start = Math.min(start, (this._count << 5) - 1);
+    end = Math.min(end, (this._count << 5) - 1);
 
     if (start >= end) {
       return;
@@ -155,7 +198,7 @@ export class TypedFastBitSet implements BitSet {
    */
   isEmpty(): boolean {
     const words = this.words;
-    const c = words.length;
+    const c = this._count;
     for (let i = 0; i < c; i++) {
       if (words[i] !== 0) return false;
     }
@@ -175,8 +218,8 @@ export class TypedFastBitSet implements BitSet {
   hasAnyInRange(start: number, end: number): boolean {
     if (start >= end) return false;
     const words = this.words;
-    start = Math.min(start, (words.length << 5) - 1);
-    end = Math.min(end, (words.length << 5) - 1);
+    start = Math.min(start, (this._count << 5) - 1);
+    end = Math.min(end, (this._count << 5) - 1);
     const firstword = start >>> 5;
     const endword = (end - 1) >> 5;
     if (firstword === endword)
@@ -193,8 +236,8 @@ export class TypedFastBitSet implements BitSet {
    * @returns 1 if the value was added, 0 if the value was already present
    */
   checkedAdd(index: number): 0 | 1 {
-    const words = this.words;
     this.resize(index);
+    const words = this.words;
     const word = words[index >>> 5];
     const newword = word | (1 << index);
     words[index >>> 5] = newword;
@@ -205,42 +248,58 @@ export class TypedFastBitSet implements BitSet {
    * Reduce the memory usage to a minimum
    */
   trim(): void {
-    const words = this.words;
-    let nl = words.length;
-    while (nl > 0 && words[nl - 1] === 0) {
+    let nl = this._count;
+    while (nl > 0 && this.words[nl - 1] === 0) {
       nl--;
     }
-    this.words = words.slice(0, nl);
+    this._count = nl;
+    if (nl < this.words.length) {
+      const newWords = new Uint32Array(nl);
+      newWords.set(this.words.subarray(0, nl));
+      this.words = newWords;
+    }
   }
 
   /**
-   * Resize the bitset so that we can write a value at index
-   * This may overallocate memory for speed.
+   * Resize the bitset so that we can write a value at index.
+   * The underlying buffer may be overallocated for amortized growth,
+   * but _count always reflects the exact logical word count.
    */
   resize(index: number): void {
-    const words = this.words;
-    if (words.length << 5 > index) return;
-    let count = (index + 32) >>> 5; // just what is needed
-    // we avoid the overflow when shifting by 1
-    if((count << 1) > count) {
-      count <<= 1; // double the size for future growth
+    if (this._count << 5 > index) return;
+    const count = (index + 32) >>> 5;
+    if (count <= this.words.length) {
+      // Buffer has room — just update logical count
+      this._count = count;
+    } else {
+      // Need a bigger buffer — 4x overallocation for amortized growth
+      let newCapacity = count;
+      if (newCapacity << 1 > newCapacity) {
+        newCapacity <<= 1;
+      }
+      newCapacity <<= 1;
+      const newWords = new Uint32Array(newCapacity);
+      newWords.set(this.words.subarray(0, this._count));
+      this.words = newWords;
+      this._count = count;
     }
-    const newwords = new Uint32Array(count << 1);
-    newwords.set(words); // hopefully, this copy is fast
-    this.words = newwords;
   }
 
   /**
-   * Resize the bitset to a specific size
+   * Resize the bitset to a specific size.
    * This does not overallocate memory.
    */
   resizeTo(size: number): void {
-    const words = this.words;
     const needed = (size + 31) >>> 5;
-    if (words.length >= needed) return;
-    const newwords = new Uint32Array(needed);
-    newwords.set(words);
-    this.words = newwords;
+    if (this._count >= needed) return;
+    if (needed <= this.words.length) {
+      this._count = needed;
+    } else {
+      const newWords = new Uint32Array(needed);
+      newWords.set(this.words.subarray(0, this._count));
+      this.words = newWords;
+      this._count = needed;
+    }
   }
 
   /**
@@ -249,14 +308,14 @@ export class TypedFastBitSet implements BitSet {
   size(): number {
     const words = this.words;
     let answer = 0;
-    const c = words.length;
+    const c = this._count;
     let k = 0 | 0;
     for (; k + 4 < c; k += 4) {
       answer += hammingWeight4(
         words[k] | 0,
         words[k + 1] | 0,
         words[k + 2] | 0,
-        words[k + 3] | 0
+        words[k + 3] | 0,
       );
     }
 
@@ -273,13 +332,12 @@ export class TypedFastBitSet implements BitSet {
     const words = this.words;
     const answer: number[] = new Array(this.size());
     let pos = 0 | 0;
-    const c = words.length;
+    const c = this._count;
     for (let k = 0; k < c; ++k) {
       let w = words[k];
       while (w != 0) {
-        const t = w & -w;
-        answer[pos++] = (k << 5) + hammingWeight((t - 1) | 0);
-        w ^= t;
+        answer[pos++] = (k << 5) + (31 - Math.clz32(w & -w));
+        w &= w - 1;
       }
     }
     return answer;
@@ -287,13 +345,12 @@ export class TypedFastBitSet implements BitSet {
 
   forEach(fnc: (id: number) => void): void {
     const words = this.words;
-    const c = words.length;
+    const c = this._count;
     for (let k = 0; k < c; ++k) {
       let w = words[k];
       while (w != 0) {
-        const t = w & -w;
-        fnc(((k << 5) + hammingWeight(t - 1)) | 0);
-        w ^= t;
+        fnc((k << 5) + (31 - Math.clz32(w & -w)));
+        w &= w - 1;
       }
     }
   }
@@ -303,9 +360,9 @@ export class TypedFastBitSet implements BitSet {
    */
   [Symbol.iterator](): IterableIterator<number> {
     const words = this.words;
-    const c = words.length;
+    const c = this._count;
     let k = 0;
-    let w = words[k];
+    let w = k < c ? words[k] : 0;
 
     return {
       [Symbol.iterator]() {
@@ -314,9 +371,8 @@ export class TypedFastBitSet implements BitSet {
       next() {
         while (k < c) {
           if (w !== 0) {
-            const t = w & -w;
-            const value = (k << 5) + hammingWeight((t - 1) | 0);
-            w ^= t;
+            const value = (k << 5) + (31 - Math.clz32(w & -w));
+            w &= w - 1;
             return { done: false, value };
           } else {
             k++;
@@ -334,7 +390,7 @@ export class TypedFastBitSet implements BitSet {
    * @returns a copy of this bitmap
    */
   clone(): TypedFastBitSet {
-    return TypedFastBitSet.fromWords(new Uint32Array(this.words));
+    return TypedFastBitSet.fromWords(this.words.slice(0, this._count));
   }
 
   /**
@@ -344,7 +400,7 @@ export class TypedFastBitSet implements BitSet {
   intersects(otherbitmap: BitSet): boolean {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const newcount = Math.min(words.length, otherWords.length);
+    const newcount = Math.min(this._count, wc(otherbitmap));
     for (let k = 0 | 0; k < newcount; ++k) {
       if ((words[k] & otherWords[k]) !== 0) return true;
     }
@@ -358,7 +414,8 @@ export class TypedFastBitSet implements BitSet {
   intersection(otherbitmap: BitSet): this {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const newcount = Math.min(words.length, otherWords.length);
+    const oc = wc(otherbitmap);
+    const newcount = Math.min(this._count, oc);
     let k = 0 | 0;
     for (; k + 7 < newcount; k += 8) {
       words[k] &= otherWords[k];
@@ -373,10 +430,10 @@ export class TypedFastBitSet implements BitSet {
     for (; k < newcount; ++k) {
       words[k] &= otherWords[k];
     }
-    const c = words.length;
-    for (k = newcount; k < c; ++k) {
+    for (k = newcount; k < this._count; ++k) {
       words[k] = 0;
     }
+    this._count = newcount;
     return this;
   }
 
@@ -386,7 +443,7 @@ export class TypedFastBitSet implements BitSet {
   intersection_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const newcount = Math.min(words.length, otherWords.length);
+    const newcount = Math.min(this._count, wc(otherbitmap));
     let answer = 0 | 0;
     for (let k = 0 | 0; k < newcount; ++k) {
       answer += hammingWeight(words[k] & otherWords[k]);
@@ -402,7 +459,7 @@ export class TypedFastBitSet implements BitSet {
     const words = this.words;
     const otherWords = otherbitmap.words;
 
-    const count = Math.min(words.length, otherWords.length);
+    const count = Math.min(this._count, wc(otherbitmap));
     const newWords = new Uint32Array(count);
     let k = 0 | 0;
     for (; k + 7 < count; k += 8) {
@@ -412,8 +469,8 @@ export class TypedFastBitSet implements BitSet {
       newWords[k + 3] = words[k + 3] & otherWords[k + 3];
       newWords[k + 4] = words[k + 4] & otherWords[k + 4];
       newWords[k + 5] = words[k + 5] & otherWords[k + 5];
-      newWords[k + 7] = words[k + 7] & otherWords[k + 7];
       newWords[k + 6] = words[k + 6] & otherWords[k + 6];
+      newWords[k + 7] = words[k + 7] & otherWords[k + 7];
     }
     for (; k < count; ++k) {
       newWords[k] = words[k] & otherWords[k];
@@ -428,18 +485,18 @@ export class TypedFastBitSet implements BitSet {
   equals(otherbitmap: BitSet): boolean {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const mcount = Math.min(words.length, otherWords.length);
+    const tc = this._count;
+    const oc = wc(otherbitmap);
+    const mcount = Math.min(tc, oc);
     for (let k = 0 | 0; k < mcount; ++k) {
       if (words[k] != otherWords[k]) return false;
     }
-    if (words.length < otherWords.length) {
-      const c = otherWords.length;
-      for (let k = words.length; k < c; ++k) {
+    if (tc < oc) {
+      for (let k = tc; k < oc; ++k) {
         if (otherWords[k] != 0) return false;
       }
-    } else if (otherWords.length < words.length) {
-      const c = words.length;
-      for (let k = otherWords.length; k < c; ++k) {
+    } else if (oc < tc) {
+      for (let k = oc; k < tc; ++k) {
         if (words[k] != 0) return false;
       }
     }
@@ -453,7 +510,7 @@ export class TypedFastBitSet implements BitSet {
   difference(otherbitmap: BitSet): this {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const newcount = Math.min(words.length, otherWords.length);
+    const newcount = Math.min(this._count, wc(otherbitmap));
     let k = 0 | 0;
     for (; k + 7 < newcount; k += 8) {
       words[k] &= ~otherWords[k];
@@ -478,8 +535,9 @@ export class TypedFastBitSet implements BitSet {
    * (for this set A and other set B, this computes B = A - B  and returns B)
    */
   difference2(otherbitmap: BitSet): BitSet {
-    const mincount = Math.min(this.words.length, otherbitmap.words.length);
-    otherbitmap.resizeTo((this.words.length << 5) - 1);
+    const tc = this._count;
+    const mincount = Math.min(tc, wc(otherbitmap));
+    otherbitmap.resizeTo((tc << 5) - 1);
 
     const words = this.words;
     const otherWords = otherbitmap.words;
@@ -495,13 +553,17 @@ export class TypedFastBitSet implements BitSet {
       otherWords[k + 7] = words[k + 7] & ~otherWords[k + 7];
     }
     for (; k < mincount; ++k) {
-      otherWords[k] = this.words[k] & ~otherWords[k];
+      otherWords[k] = words[k] & ~otherWords[k];
     }
     // remaining words are all part of difference
-    for (; k < this.words.length; ++k) {
-      otherWords[k] = this.words[k];
+    for (; k < tc; ++k) {
+      otherWords[k] = words[k];
     }
-    otherWords.fill(0, k);
+    // zero beyond this bitmap's logical extent
+    const oc = wc(otherbitmap);
+    for (let j = tc; j < oc; ++j) {
+      otherWords[j] = 0;
+    }
     return otherbitmap;
   }
 
@@ -519,13 +581,13 @@ export class TypedFastBitSet implements BitSet {
   difference_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const newcount = Math.min(words.length, otherWords.length);
+    const newcount = Math.min(this._count, wc(otherbitmap));
     let answer = 0 | 0;
     let k = 0 | 0;
     for (; k < newcount; ++k) {
       answer += hammingWeight(words[k] & ~otherWords[k]);
     }
-    const c = words.length;
+    const c = this._count;
     for (; k < c; ++k) {
       answer += hammingWeight(words[k]);
     }
@@ -538,8 +600,9 @@ export class TypedFastBitSet implements BitSet {
    */
   change(otherbitmap: BitSet): this {
     const otherWords = otherbitmap.words;
-    const mincount = Math.min(this.words.length, otherWords.length);
-    this.resizeTo((otherWords.length << 5) - 1);
+    const oc = wc(otherbitmap);
+    const mincount = Math.min(this._count, oc);
+    this.resizeTo((oc << 5) - 1);
     const words = this.words;
     let k = 0 | 0;
     for (; k + 7 < mincount; k += 8) {
@@ -556,7 +619,7 @@ export class TypedFastBitSet implements BitSet {
       words[k] ^= otherWords[k];
     }
     // remaining words are all part of change
-    for (; k < otherWords.length; ++k) {
+    for (; k < oc; ++k) {
       words[k] = otherWords[k];
     }
     return this;
@@ -569,9 +632,11 @@ export class TypedFastBitSet implements BitSet {
   new_change(otherbitmap: BitSet): TypedFastBitSet {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const count = Math.max(words.length, otherWords.length);
+    const tc = this._count;
+    const oc = wc(otherbitmap);
+    const count = Math.max(tc, oc);
     const newWords = new Uint32Array(count);
-    const mcount = Math.min(words.length, otherWords.length);
+    const mcount = Math.min(tc, oc);
     let k = 0;
     for (; k + 7 < mcount; k += 8) {
       newWords[k] = words[k] ^ otherWords[k];
@@ -587,12 +652,10 @@ export class TypedFastBitSet implements BitSet {
       newWords[k] = words[k] ^ otherWords[k];
     }
 
-    const c = words.length;
-    for (k = mcount; k < c; ++k) {
+    for (k = mcount; k < tc; ++k) {
       newWords[k] = words[k];
     }
-    const c2 = otherWords.length;
-    for (k = mcount; k < c2; ++k) {
+    for (k = mcount; k < oc; ++k) {
       newWords[k] = otherWords[k];
     }
     return new TypedFastBitSet(undefined, newWords);
@@ -604,16 +667,22 @@ export class TypedFastBitSet implements BitSet {
   change_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const mincount = Math.min(words.length, otherWords.length);
+    const tc = this._count;
+    const oc = wc(otherbitmap);
+    const mincount = Math.min(tc, oc);
     let answer = 0 | 0;
     let k = 0 | 0;
     for (; k < mincount; ++k) {
       answer += hammingWeight(words[k] ^ otherWords[k]);
     }
-    const longer = words.length > otherWords.length ? this : otherbitmap;
-    const c = longer.words.length;
-    for (; k < c; ++k) {
-      answer += hammingWeight(longer.words[k]);
+    if (tc > oc) {
+      for (; k < tc; ++k) {
+        answer += hammingWeight(words[k]);
+      }
+    } else {
+      for (; k < oc; ++k) {
+        answer += hammingWeight(otherWords[k]);
+      }
     }
     return answer;
   }
@@ -632,7 +701,8 @@ export class TypedFastBitSet implements BitSet {
   union(otherbitmap: BitSet): this {
     let words = this.words;
     const otherWords = otherbitmap.words;
-    const mcount = Math.min(words.length, otherWords.length);
+    const oc = wc(otherbitmap);
+    const mcount = Math.min(this._count, oc);
     let k = 0 | 0;
     for (; k + 7 < mcount; k += 8) {
       words[k] |= otherWords[k];
@@ -647,11 +717,10 @@ export class TypedFastBitSet implements BitSet {
     for (; k < mcount; ++k) {
       words[k] |= otherWords[k];
     }
-    if (words.length < otherWords.length) {
-      this.resizeTo((otherWords.length << 5) - 1);
+    if (this._count < oc) {
+      this.resizeTo((oc << 5) - 1);
       words = this.words;
-      const c = otherWords.length;
-      for (k = mcount; k < c; ++k) {
+      for (k = mcount; k < oc; ++k) {
         words[k] = otherWords[k];
       }
     }
@@ -665,18 +734,18 @@ export class TypedFastBitSet implements BitSet {
   new_union(otherbitmap: BitSet): TypedFastBitSet {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const count = Math.max(words.length, otherWords.length);
+    const tc = this._count;
+    const oc = wc(otherbitmap);
+    const count = Math.max(tc, oc);
     const newWords = new Uint32Array(count);
-    const mcount = Math.min(words.length, otherWords.length);
+    const mcount = Math.min(tc, oc);
     for (let k = 0; k < mcount; ++k) {
       newWords[k] = words[k] | otherWords[k];
     }
-    const c = words.length;
-    for (let k = mcount; k < c; ++k) {
+    for (let k = mcount; k < tc; ++k) {
       newWords[k] = words[k];
     }
-    const c2 = otherWords.length;
-    for (let k = mcount; k < c2; ++k) {
+    for (let k = mcount; k < oc; ++k) {
       newWords[k] = otherWords[k];
     }
     return new TypedFastBitSet(undefined, newWords);
@@ -688,19 +757,19 @@ export class TypedFastBitSet implements BitSet {
   union_size(otherbitmap: BitSet): number {
     const words = this.words;
     const otherWords = otherbitmap.words;
-    const mcount = Math.min(words.length, otherWords.length);
+    const tc = this._count;
+    const oc = wc(otherbitmap);
+    const mcount = Math.min(tc, oc);
     let answer = 0 | 0;
     for (let k = 0 | 0; k < mcount; ++k) {
       answer += hammingWeight(words[k] | otherWords[k]);
     }
-    if (words.length < otherWords.length) {
-      const c = otherWords.length;
-      for (let k = words.length; k < c; ++k) {
+    if (tc < oc) {
+      for (let k = tc; k < oc; ++k) {
         answer += hammingWeight(otherWords[k] | 0);
       }
     } else {
-      const c = words.length;
-      for (let k = otherWords.length; k < c; ++k) {
+      for (let k = oc; k < tc; ++k) {
         answer += hammingWeight(words[k] | 0);
       }
     }

@@ -11,6 +11,7 @@ const tBitSet = require("bitset");
 const fBitSet = require("fast-bitset");
 const roaring = require("roaring");
 const os = require("os");
+const minimist = require("minimist");
 
 const smallgap = 3;
 const largegap = 210;
@@ -1360,7 +1361,51 @@ function XORBench() {
     .run({ async: false });
 }
 
+const benchmarks = {
+  "or": { fn: OrBench, desc: "union (new bitmap)" },
+  "xor": { fn: XORBench, desc: "change/XOR (new bitmap)" },
+  "and": { fn: AndBench, desc: "intersection (new bitmap)" },
+  "difference": { fn: DifferenceBench, desc: "difference (new bitmap)" },
+  "xor-inplace": { fn: XORInplaceBench, desc: "change/XOR (in-place)" },
+  "or-inplace": { fn: OrInplaceBench, desc: "union (in-place)" },
+  "and-inplace": { fn: AndInplaceBench, desc: "intersection (in-place)" },
+  "andnot-inplace": { fn: AndNotInplaceBench, desc: "difference (in-place)" },
+  "cardinality": { fn: CardBench, desc: "cardinality / size()" },
+  "or-card": { fn: OrCardBench, desc: "union cardinality" },
+  "and-card": { fn: AndCardBench, desc: "intersection cardinality" },
+  "difference-card": { fn: DifferenceCardBench, desc: "difference cardinality" },
+  "create": { fn: CreateBench, desc: "dynamic bitmap creation" },
+  "query": { fn: QueryBench, desc: "has() query" },
+  "array": { fn: ArrayBench, desc: "array extraction" },
+  "foreach": { fn: ForEachBench, desc: "forEach iteration" },
+  "clone": { fn: CloneBench, desc: "clone" },
+};
+
 const main = function () {
+  const args = minimist(process.argv.slice(2));
+
+  if (args.list) {
+    console.log("Available benchmarks:");
+    for (const [name, { desc }] of Object.entries(benchmarks)) {
+      console.log(`  ${name.padEnd(20)} ${desc}`);
+    }
+    return;
+  }
+
+  const selected = args.select
+    ? Object.entries(benchmarks).filter(([name, { desc }]) =>
+        name.includes(args.select) || desc.toLowerCase().includes(args.select.toLowerCase())
+      )
+    : Object.entries(benchmarks);
+
+  if (selected.length === 0) {
+    console.log(`No benchmarks matching "${args.select}". Use --list to see available benchmarks.`);
+    return;
+  }
+
+  function tryVersion(pkg) {
+    try { return require(pkg + "/package.json").version; } catch { return ""; }
+  }
   console.log("Benchmarking against:");
   console.log(
     "TypedFastBitSet.js: https://github.com/lemire/TypedFastBitSet.js"
@@ -1368,15 +1413,15 @@ const main = function () {
   console.log("roaring: https://www.npmjs.com/package/roaring");
   console.log(
     "infusion.BitSet.js from https://github.com/infusion/BitSet.js",
-    require("bitset.js/package.json").version
+    tryVersion("bitset.js")
   );
   console.log(
     "tdegrunt.BitSet from https://github.com/tdegrunt/bitset",
-    require("bitset/package.json").version
+    tryVersion("bitset")
   );
   console.log(
     "mattkrick.fast-bitset from https://github.com/mattkrick/fast-bitset",
-    require("fast-bitset/package.json").version
+    tryVersion("fast-bitset")
   );
   console.log("standard Set object from JavaScript");
   console.log("");
@@ -1395,50 +1440,11 @@ const main = function () {
       process.versions.v8
   );
   console.log();
-  console.log(
-    "We proceed with the logical operations generating new bitmaps: "
-  );
-  console.log("");
-  OrBench();
-  console.log("");
-  XORBench();
-  console.log("");
-  AndBench();
-  console.log("");
-  DifferenceBench();
-  console.log("");
-  console.log("We benchmark the in-place logical operations: ");
-  console.log("(Notice how much faster they are.)");
-  console.log("");
-  XORInplaceBench();
-  console.log("");
-  OrInplaceBench();
-  console.log("");
-  AndInplaceBench();
-  console.log("");
-  AndNotInplaceBench();
-  console.log("");
-  console.log("We benchmark the operations computing the set sizes: ");
-  console.log("");
-  CardBench();
-  console.log("");
-  OrCardBench();
-  console.log("");
-  AndCardBench();
-  console.log("");
-  DifferenceCardBench();
-  console.log("");
-  console.log("We conclude with other benchmarks: ");
-  console.log("");
-  CreateBench();
-  console.log("");
-  QueryBench();
-  console.log("");
-  ArrayBench();
-  console.log("");
-  ForEachBench();
-  console.log("");
-  CloneBench();
+
+  for (const [name, { fn, desc }] of selected) {
+    fn();
+    console.log("");
+  }
 };
 
 if (require.main === module) {

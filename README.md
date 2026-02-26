@@ -1,7 +1,6 @@
 # TypedFastBitSet.js
 
-
-Speed-optimized BitSet implementation for modern browsers and JavaScript engines, uses typed arrays
+Speed-optimized BitSet implementation for modern browsers and JavaScript engines, uses typed arrays.
 
 A BitSet (also called Bitmap or bit vector) is an ideal data structure to implement a
 set when values being stored are reasonably small integers. It can be orders of magnitude
@@ -15,7 +14,7 @@ browsers and JavaScript engines. It is ideal for maintaining sets of integers wh
 
 License: Apache License 2.0
 
-# Usage
+## Usage
 
 ```javascript
 const b = new TypedFastBitSet(); // initially empty
@@ -47,209 +46,282 @@ for (const x of c) fnc(x); // execute fnc on each value stored in c (allows earl
 c.trim(); // reduce the memory usage of the bitmap if possible, the content remains the same
 ```
 
-If you are using node.js, you need to import the module:
+If you are using Node.js, you need to import the module:
 
 ```javascript
-const TypedFastBitSet = require("typedfastbitset");
+const { TypedFastBitSet } = require("typedfastbitset");
 const b = new TypedFastBitSet(); // initially empty
 b.add(1); // add the value "1"
 ```
 
-Performance tip: in-place functions such as intersection, union and difference can be
-much faster than functions generating a new bitmap (new_intersection, new_union
-and new_difference) because they avoid creating a new object, a potentially
-expensive process in JavaScript. For faster code, use as few FastBitSet objects as
+Performance tip: in-place functions such as `intersection`, `union` and `difference` can be
+much faster than functions generating a new bitmap (`new_intersection`, `new_union`
+and `new_difference`) because they avoid creating a new object, a potentially
+expensive process in JavaScript. For faster code, use as few TypedFastBitSet objects as
 you can.
 
-There is also `SparseTypedFastBitSet` which might perform better depending on the shape of your data
-This implementation starts as an array of values and switches to a bitset structure once enough entries have been added
+There is also `SparseTypedFastBitSet` which might perform better depending on the shape of your data.
+This implementation starts as an array of values and switches to a bitset structure once enough entries have been added.
 
-# npm install
+## API
 
-      $ npm install typedfastbitset
+### Constructor and Static Methods
 
-# Testing
+- `new TypedFastBitSet(iterable?)` — create a bitset, optionally initialized from an iterable of integers
+- `TypedFastBitSet.fromWords(words: Uint32Array)` — create a bitset from a raw word array
 
-Using node.js (npm), you can test the code as follows...
+### Basic Operations
 
-      $ npm test
+- `add(index)` — set bit at index to true
+- `checkedAdd(index)` — add value, returns `1` if added, `0` if already present
+- `remove(index)` — set bit at index to false
+- `flip(index)` — toggle bit at index
+- `has(index)` — returns `true` if bit at index is set
+- `clear()` — remove all values, reset memory
 
-# Is it faster?
+### Range Operations
 
-To run benchmarks, please use the instructions in the benchmark folder.
+- `addRange(start, end)` — set bits from start (inclusive) to end (exclusive)
+- `removeRange(start, end)` — clear bits from start (inclusive) to end (exclusive)
+- `hasAnyInRange(start, end)` — returns `true` if any bit in range is set
+
+### Iteration
+
+- `array()` — return an array of set bit indices
+- `forEach(fn)` — call `fn` for each set bit index
+- `[Symbol.iterator]()` — iterate over set bit indices (supports `for...of`)
+
+### Set Operations (in-place, modifies `this`)
+
+- `union(other)` — `this = this | other`
+- `intersection(other)` — `this = this & other`
+- `difference(other)` — `this = this & ~other`
+- `difference2(other)` — `other = this & ~other` (modifies `other`)
+- `change(other)` — `this = this ^ other`
+
+### Set Operations (new bitmap)
+
+- `new_union(other)` — returns new bitmap `this | other`
+- `new_intersection(other)` — returns new bitmap `this & other`
+- `new_difference(other)` — returns new bitmap `this & ~other`
+- `new_change(other)` — returns new bitmap `this ^ other`
+
+### Size Queries
+
+- `size()` — number of set bits
+- `isEmpty()` — returns `true` if no bit is set
+- `union_size(other)` — size of union without creating it
+- `intersection_size(other)` — size of intersection without creating it
+- `difference_size(other)` — size of difference without creating it
+- `change_size(other)` — size of symmetric difference without creating it
+
+### Comparison and Utility
+
+- `equals(other)` — returns `true` if both bitsets contain the same values
+- `intersects(other)` — returns `true` if bitsets share any value
+- `clone()` — returns a deep copy
+- `trim()` — reduce memory usage by removing trailing empty words
+- `resize(index)` — ensure capacity for the given index (may over-allocate for speed)
+- `resizeTo(size)` — ensure capacity for exactly `size` bits (no over-allocation)
+- `toString()` — string representation like `{1,2,3}`
+
+## npm install
+
+```
+npm install typedfastbitset
+```
+
+## Testing
+
+```
+npm test
+```
+
+## Is it faster?
 
 TypedFastBitSet can be quite fast compared to competitive alternatives :
 
 ```bash
-$ node test.js
+$ node benchmark/test.js
 Benchmarking against:
 TypedFastBitSet.js: https://github.com/lemire/TypedFastBitSet.js
+roaring: https://www.npmjs.com/package/roaring
 infusion.BitSet.js from https://github.com/infusion/BitSet.js 5.0.0
-tdegrunt.BitSet from https://github.com/tdegrunt/bitset 5.1.1
+tdegrunt.BitSet from https://github.com/tdegrunt/bitset
 mattkrick.fast-bitset from https://github.com/mattkrick/fast-bitset 1.3.2
 standard Set object from JavaScript
 
 Not all libraries support all operations. We benchmark what is available.
 
-Platform: linux 4.19.128-microsoft-standard x64
-Intel(R) Core(TM) i7-9750H CPU @ 2.60GHz
-Node version 12.20.0, v8 version 7.8.279.23-node.45
-
-We proceed with the logical operations generating new bitmaps:
+Platform: darwin 25.2.0 arm64
+Apple M4 Max
+Node version 25.6.1, v8 version 14.1.146.11-node.19
 
 starting union query benchmark
-FastBitSet (creates new bitset) x 60.79 ops/sec ±1.07% (66 runs sampled)
-TypedFastBitSet (creates new bitset) x 42.67 ops/sec ±10.58% (46 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 60.95 ops/sec ±11.04% (61 runs sampled)
-mattkrick.fast-bitset (creates new bitset) x 76.72 ops/sec ±3.77% (69 runs sampled)
-Set x 2.64 ops/sec ±3.42% (11 runs sampled)
+roaring x 1,094 ops/sec ±3.58% (38 runs sampled)
+FastBitSet (creates new bitset) x 117 ops/sec ±1.28% (80 runs sampled)
+TypedFastBitSet (creates new bitset) x 194 ops/sec ±1.85% (81 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 29.50 ops/sec ±3.87% (29 runs sampled)
+mattkrick.fast-bitset (creates new bitset) x 141 ops/sec ±2.29% (70 runs sampled)
+Set x 12.61 ops/sec ±1.31% (36 runs sampled)
 
 starting change (XOR) query benchmark
-FastBitSet (creates new bitset) x 58.48 ops/sec ±1.23% (64 runs sampled)
-TypedFastBitSet (creates new bitset) x 52.21 ops/sec ±5.21% (56 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 78.15 ops/sec ±2.69% (70 runs sampled)
-mattkrick.fast-bitset (creates new bitset) x 12.41 ops/sec ±2.53% (36 runs sampled)
-Set x 2.67 ops/sec ±1.01% (11 runs sampled)
+roaring x 1,212 ops/sec ±1.99% (39 runs sampled)
+FastBitSet (creates new bitset) x 115 ops/sec ±1.26% (79 runs sampled)
+TypedFastBitSet (creates new bitset) x 180 ops/sec ±1.91% (66 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 30.00 ops/sec ±2.10% (29 runs sampled)
+mattkrick.fast-bitset (creates new bitset) x 25.04 ops/sec ±1.62% (47 runs sampled)
+Set x 7.73 ops/sec ±1.12% (24 runs sampled)
 
 starting intersection query benchmark
-FastBitSet (creates new bitset) x 1,804 ops/sec ±0.87% (96 runs sampled)
-TypedFastBitSet (creates new bitset) x 2,432 ops/sec ±3.04% (73 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 3,738 ops/sec ±3.55% (66 runs sampled)
-mattkrick.fast-bitset  (creates new bitset) x 12.59 ops/sec ±2.47% (36 runs sampled)
-Set x 6.65 ops/sec ±3.54% (21 runs sampled)
+FastBitSet (creates new bitset) x 6,267 ops/sec ±0.26% (97 runs sampled)
+TypedFastBitSet (creates new bitset) x 9,373 ops/sec ±1.74% (81 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 8,474 ops/sec ±1.08% (84 runs sampled)
+mattkrick.fast-bitset  (creates new bitset) x 24.87 ops/sec ±1.75% (46 runs sampled)
+roaring x 53,457 ops/sec ±1.97% (74 runs sampled)
+Set x 17.91 ops/sec ±2.25% (46 runs sampled)
 
 starting difference query benchmark
-FastBitSet (creates new bitset) x 2,088 ops/sec ±1.61% (86 runs sampled)
-TypedFastBitSet (creates new bitset) x 2,720 ops/sec ±3.48% (74 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 4,184 ops/sec ±3.63% (61 runs sampled)
-Set x 3.13 ops/sec ±2.52% (12 runs sampled)
-
-We benchmark the in-place logical operations:
-(Notice how much faster they are.)
+FastBitSet (creates new bitset) x 9,956 ops/sec ±0.36% (98 runs sampled)
+TypedFastBitSet (creates new bitset) x 10,244 ops/sec ±2.02% (79 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 9,940 ops/sec ±1.91% (86 runs sampled)
+Set x 18.79 ops/sec ±0.99% (37 runs sampled)
 
 starting inplace change (XOR) benchmark
-FastBitSet (inplace) x 93.96 ops/sec ±1.09% (83 runs sampled)
-TypedFastBitSet (inplace) x 79.81 ops/sec ±0.89% (71 runs sampled)
-SparseTypedFastBitSet (inplace) x 113 ops/sec ±0.48% (85 runs sampled)
-infusion.BitSet.js (inplace) x 1.15 ops/sec ±1.68% (7 runs sampled)
-tdegrunt.BitSet (inplace) x 1.15 ops/sec ±4.27% (7 runs sampled)
-Set (inplace) x 5.35 ops/sec ±1.16% (18 runs sampled)
+FastBitSet (inplace) x 298 ops/sec ±2.85% (91 runs sampled)
+TypedFastBitSet (inplace) x 365 ops/sec ±1.49% (92 runs sampled)
+SparseTypedFastBitSet (inplace) x 343 ops/sec ±1.25% (92 runs sampled)
+infusion.BitSet.js (inplace) x 2.84 ops/sec ±5.24% (12 runs sampled)
+tdegrunt.BitSet (inplace) x 2.98 ops/sec ±1.78% (12 runs sampled)
+roaring x 1,217 ops/sec ±0.16% (100 runs sampled)
+Set (inplace) x 18.71 ops/sec ±1.77% (37 runs sampled)
 
 starting inplace union  benchmark
-FastBitSet (inplace) x 112 ops/sec ±1.19% (84 runs sampled)
-TypedFastBitSet (inplace) x 79.55 ops/sec ±1.29% (71 runs sampled)
-SparseTypedFastBitSet (inplace) x 74.71 ops/sec ±11.95% (71 runs sampled)
-infusion.BitSet.js (inplace) x 1.18 ops/sec ±1.58% (7 runs sampled)
-tdegrunt.BitSet (inplace) x 1.15 ops/sec ±3.42% (7 runs sampled)
-Set (inplace) x 14.07 ops/sec ±5.76% (41 runs sampled)
+FastBitSet (inplace) x 335 ops/sec ±2.51% (91 runs sampled)
+TypedFastBitSet (inplace) x 368 ops/sec ±1.50% (91 runs sampled)
+SparseTypedFastBitSet (inplace) x 150 ops/sec ±2.00% (84 runs sampled)
+infusion.BitSet.js (inplace) x 3.08 ops/sec ±2.07% (12 runs sampled)
+tdegrunt.BitSet (inplace) x 3.31 ops/sec ±3.49% (13 runs sampled)
+roaring x 1,576 ops/sec ±0.38% (98 runs sampled)
+Set (inplace) x 36.73 ops/sec ±3.98% (50 runs sampled)
 
 starting inplace intersection  benchmark
-FastBitSet (inplace) x 12,358 ops/sec ±1.25% (88 runs sampled)
-TypedFastBitSet (inplace) x 6,092 ops/sec ±0.40% (96 runs sampled)
-SparseTypedFastBitSet (inplace) x 8,812 ops/sec ±0.53% (98 runs sampled)
-infusion.BitSet.js (inplace) x 1,606 ops/sec ±0.63% (98 runs sampled)
-tdegrunt.BitSet (inplace) x 1,591 ops/sec ±0.86% (86 runs sampled)
-Set (inplace) x 5.40 ops/sec ±2.94% (18 runs sampled)
+FastBitSet (inplace) x 25,628 ops/sec ±0.37% (97 runs sampled)
+TypedFastBitSet (inplace) x 27,163 ops/sec ±0.32% (95 runs sampled)
+SparseTypedFastBitSet (inplace) x 25,253 ops/sec ±0.34% (98 runs sampled)
+infusion.BitSet.js (inplace) x 8,735 ops/sec ±0.56% (95 runs sampled)
+tdegrunt.BitSet (inplace) x 8,629 ops/sec ±0.70% (93 runs sampled)
+roaring x 83,231 ops/sec ±0.56% (97 runs sampled)
+Set (inplace) x 17.19 ops/sec ±6.40% (34 runs sampled)
 
 starting inplace difference benchmark
-FastBitSet (inplace) x 11,185 ops/sec ±0.52% (95 runs sampled)
-FastBitSet (inplace2) x 12,276 ops/sec ±0.51% (101 runs sampled)
-TypedFastBitSet (inplace) x 5,902 ops/sec ±0.63% (100 runs sampled)
-TypedFastBitSet (inplace2) x 35,722,525 ops/sec ±1.84% (99 runs sampled)
-SparseTypedFastBitSet (inplace) x 9,121 ops/sec ±0.84% (98 runs sampled)
-SparseTypedFastBitSet (inplace2) x 12,010,947 ops/sec ±1.72% (97 runs sampled)
-infusion.BitSet.js (inplace) x 27.94 ops/sec ±9.24% (40 runs sampled)
-tdegrunt.BitSet (inplace) x 26.88 ops/sec ±10.65% (38 runs sampled)
-Set (inplace) x 6.87 ops/sec ±3.95% (22 runs sampled)
-
-We benchmark the operations computing the set sizes:
+FastBitSet (inplace) x 25,658 ops/sec ±0.37% (96 runs sampled)
+FastBitSet (inplace2) x 25,370 ops/sec ±0.34% (100 runs sampled)
+TypedFastBitSet (inplace) x 27,036 ops/sec ±0.42% (94 runs sampled)
+TypedFastBitSet (inplace2) x 218,075,807 ops/sec ±3.59% (80 runs sampled)
+SparseTypedFastBitSet (inplace) x 25,153 ops/sec ±0.47% (96 runs sampled)
+SparseTypedFastBitSet (inplace2) x 36,456,912 ops/sec ±0.53% (96 runs sampled)
+infusion.BitSet.js (inplace) x 136 ops/sec ±4.12% (72 runs sampled)
+tdegrunt.BitSet (inplace) x 136 ops/sec ±3.57% (79 runs sampled)
+roaring x 110,417 ops/sec ±0.23% (98 runs sampled)
+Set (inplace) x 20.17 ops/sec ±3.67% (38 runs sampled)
 
 starting cardinality benchmark
-FastBitSet x 4,778 ops/sec ±0.73% (97 runs sampled)
-TypedFastBitSet x 2,670 ops/sec ±2.20% (93 runs sampled)
-SparseTypedFastBitSet x 4,444 ops/sec ±0.63% (96 runs sampled)
-infusion.BitSet.js x 5,929 ops/sec ±1.12% (99 runs sampled)
-tdegrunt.BitSet x 4,739 ops/sec ±2.94% (80 runs sampled)
-mattkrick.fast-bitset x 5,319 ops/sec ±2.06% (91 runs sampled)
+FastBitSet x 11,936 ops/sec ±6.39% (81 runs sampled)
+TypedFastBitSet x 16,984 ops/sec ±0.36% (96 runs sampled)
+SparseTypedFastBitSet x 15,468 ops/sec ±0.33% (98 runs sampled)
+infusion.BitSet.js x 11,187 ops/sec ±6.80% (81 runs sampled)
+tdegrunt.BitSet x 10,807 ops/sec ±5.92% (81 runs sampled)
+mattkrick.fast-bitset x 14,236 ops/sec ±0.65% (90 runs sampled)
 
 starting union cardinality query benchmark
-FastBitSet (creates new bitset) x 19.79 ops/sec ±1.29% (38 runs sampled)
-FastBitSet (fast way) x 69.56 ops/sec ±0.81% (74 runs sampled)
-TypedFastBitSet (creates new bitset) x 25.15 ops/sec ±1.84% (47 runs sampled)
-TypedFastBitSet (fast way) x 49.84 ops/sec ±1.29% (67 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 34.47 ops/sec ±2.59% (61 runs sampled)
-SparseTypedFastBitSet (fast way) x 66.34 ops/sec ±0.51% (71 runs sampled)
-mattkrick.fast-bitset (creates new bitset) x 10.79 ops/sec ±2.25% (32 runs sampled)
-Set x 6.74 ops/sec ±6.31% (22 runs sampled)
+FastBitSet (creates new bitset) x 68.00 ops/sec ±0.54% (72 runs sampled)
+FastBitSet (fast way) x 203 ops/sec ±1.24% (89 runs sampled)
+TypedFastBitSet (creates new bitset) x 113 ops/sec ±1.31% (69 runs sampled)
+TypedFastBitSet (fast way) x 210 ops/sec ±0.82% (91 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 25.38 ops/sec ±7.04% (48 runs sampled)
+SparseTypedFastBitSet (fast way) x 207 ops/sec ±0.67% (90 runs sampled)
+roaring x 132,730 ops/sec ±0.42% (98 runs sampled)
+mattkrick.fast-bitset (creates new bitset) x 22.45 ops/sec ±1.78% (43 runs sampled)
+Set x 21.18 ops/sec ±2.80% (39 runs sampled)
 
 starting intersection cardinality query benchmark
-FastBitSet (creates new bitset) x 973 ops/sec ±1.00% (90 runs sampled)
-FastBitSet (fast way) x 4,747 ops/sec ±2.76% (93 runs sampled)
-TypedFastBitSet (creates new bitset) x 1,364 ops/sec ±2.73% (83 runs sampled)
-TypedFastBitSet (fast way) x 2,752 ops/sec ±1.39% (96 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 1,963 ops/sec ±3.26% (79 runs sampled)
-SparseTypedFastBitSet (fast way) x 3,621 ops/sec ±0.47% (97 runs sampled)
-mattkrick.fast-bitset (creates new bitset) x 10.91 ops/sec ±1.68% (32 runs sampled)
-Set x 7.17 ops/sec ±1.52% (22 runs sampled)
+FastBitSet (creates new bitset) x 3,406 ops/sec ±0.81% (88 runs sampled)
+FastBitSet (fast way) x 9,136 ops/sec ±0.36% (96 runs sampled)
+TypedFastBitSet (creates new bitset) x 6,375 ops/sec ±1.44% (73 runs sampled)
+TypedFastBitSet (fast way) x 7,799 ops/sec ±7.81% (73 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 5,884 ops/sec ±1.44% (75 runs sampled)
+SparseTypedFastBitSet (fast way) x 10,082 ops/sec ±0.23% (99 runs sampled)
+roaring x 181,699 ops/sec ±0.16% (98 runs sampled)
+mattkrick.fast-bitset (creates new bitset) x 22.29 ops/sec ±1.64% (42 runs sampled)
+Set x 19.29 ops/sec ±1.74% (37 runs sampled)
 
 starting difference cardinality query benchmark
-FastBitSet (creates new bitset) x 20.04 ops/sec ±1.42% (38 runs sampled)
-FastBitSet (fast way) x 3,909 ops/sec ±1.92% (89 runs sampled)
-TypedFastBitSet (creates new bitset) x 24.93 ops/sec ±1.83% (47 runs sampled)
-TypedFastBitSet (fast way) x 2,696 ops/sec ±1.13% (93 runs sampled)
-SparseTypedFastBitSet (creates new bitset) x 34.78 ops/sec ±2.36% (62 runs sampled)
-SparseTypedFastBitSet (fast way) x 4,105 ops/sec ±1.49% (98 runs sampled)
-Set x 7.30 ops/sec ±1.26% (23 runs sampled)
-
-We conclude with other benchmarks:
+FastBitSet (creates new bitset) x 67.90 ops/sec ±0.42% (72 runs sampled)
+FastBitSet (fast way) x 9,579 ops/sec ±0.43% (95 runs sampled)
+TypedFastBitSet (creates new bitset) x 112 ops/sec ±1.16% (67 runs sampled)
+TypedFastBitSet (fast way) x 11,129 ops/sec ±0.63% (93 runs sampled)
+SparseTypedFastBitSet (creates new bitset) x 25.89 ops/sec ±1.79% (48 runs sampled)
+SparseTypedFastBitSet (fast way) x 10,080 ops/sec ±0.35% (96 runs sampled)
+roaring x 184,226 ops/sec ±0.30% (97 runs sampled)
+Set x 27.16 ops/sec ±1.86% (49 runs sampled)
 
 starting dynamic bitmap creation benchmark
-FastBitSet x 226 ops/sec ±1.24% (84 runs sampled)
-TypedFastBitSet x 291 ops/sec ±1.11% (89 runs sampled)
-SparseTypedFastBitSet x 186 ops/sec ±0.52% (89 runs sampled)
-infusion.BitSet.js x 205 ops/sec ±0.76% (89 runs sampled)
-tdegrunt.BitSet x 201 ops/sec ±0.99% (88 runs sampled)
-Set x 9.32 ops/sec ±4.18% (28 runs sampled)
+FastBitSet x 639 ops/sec ±4.35% (88 runs sampled)
+TypedFastBitSet x 1,004 ops/sec ±2.76% (90 runs sampled)
+SparseTypedFastBitSet x 452 ops/sec ±2.13% (93 runs sampled)
+infusion.BitSet.js x 527 ops/sec ±2.82% (89 runs sampled)
+tdegrunt.BitSet x 529 ops/sec ±2.77% (91 runs sampled)
+Set x 28.40 ops/sec ±1.44% (52 runs sampled)
 
 starting query benchmark
-FastBitSet x 151,822,950 ops/sec ±2.34% (97 runs sampled)
-TypedFastBitSet x 155,858,543 ops/sec ±1.15% (95 runs sampled)
-SparseTypedFastBitSet x 161,645,701 ops/sec ±0.45% (100 runs sampled)
-infusion.BitSet.js x 148,735,325 ops/sec ±0.67% (96 runs sampled)
-tdegrunt.BitSet x 161,754,395 ops/sec ±0.42% (99 runs sampled)
-mattkrick.fast-bitset x 163,421,081 ops/sec ±0.58% (100 runs sampled)
-Set x 79,311,192 ops/sec ±0.47% (98 runs sampled)
+FastBitSet x 267,971,357 ops/sec ±4.56% (78 runs sampled)
+TypedFastBitSet x 277,248,227 ops/sec ±3.60% (79 runs sampled)
+SparseTypedFastBitSet x 270,419,090 ops/sec ±5.64% (76 runs sampled)
+infusion.BitSet.js x 243,560,372 ops/sec ±4.13% (78 runs sampled)
+tdegrunt.BitSet x 250,951,159 ops/sec ±3.95% (77 runs sampled)
+mattkrick.fast-bitset x 265,732,094 ops/sec ±5.79% (75 runs sampled)
+Set x 273,777,755 ops/sec ±4.58% (78 runs sampled)
 
 starting array extraction benchmark
-FastBitSet x 221 ops/sec ±0.86% (89 runs sampled)
-TypedFastBitSet x 199 ops/sec ±2.38% (81 runs sampled)
-SparseTypedFastBitSet x 215 ops/sec ±0.93% (87 runs sampled)
-mattkrick.fast-bitset x 32.82 ops/sec ±2.71% (58 runs sampled)
+FastBitSet x 458 ops/sec ±0.58% (92 runs sampled)
+TypedFastBitSet x 541 ops/sec ±15.18% (83 runs sampled)
+SparseTypedFastBitSet x 478 ops/sec ±0.46% (94 runs sampled)
+mattkrick.fast-bitset x 59.31 ops/sec ±0.70% (63 runs sampled)
 
 starting forEach benchmark
-FastBitSet x 87.98 ops/sec ±0.69% (77 runs sampled)
-TypedFastBitSet x 88.98 ops/sec ±0.64% (78 runs sampled)
-SparseTypedFastBitSet x 87.26 ops/sec ±0.62% (77 runs sampled)
+FastBitSet x 634 ops/sec ±0.39% (96 runs sampled)
+TypedFastBitSet x 416 ops/sec ±1.38% (86 runs sampled)
+SparseTypedFastBitSet x 358 ops/sec ±2.75% (89 runs sampled)
 FastBitSet (via array):
-TypedFastBitSet (via array) x 5.18 ops/sec ±8.10% (18 runs sampled)
-SparseTypedFastBitSet (via array) x 5.09 ops/sec ±2.49% (18 runs sampled)
-mattkrick.fast-bitset x 60.89 ops/sec ±0.87% (65 runs sampled)
-Set x 56.26 ops/sec ±4.53% (60 runs sampled)
+TypedFastBitSet (via array) x 42.65 ops/sec ±3.74% (57 runs sampled)
+SparseTypedFastBitSet (via array) x 40.93 ops/sec ±9.44% (59 runs sampled)
+mattkrick.fast-bitset x 61.62 ops/sec ±11.95% (66 runs sampled)
+Set x 67.15 ops/sec ±8.87% (71 runs sampled)
 
 starting clone benchmark
-FastBitSet x 2,449 ops/sec ±1.38% (91 runs sampled)
-TypedFastBitSet x 9,491 ops/sec ±2.45% (58 runs sampled)
-SparseTypedFastBitSet x 14,517 ops/sec ±2.13% (71 runs sampled)
-infusion.BitSet.js x 1,519 ops/sec ±2.82% (64 runs sampled)
-mattkrick.fast-bitset x 113 ops/sec ±1.44% (82 runs sampled)
-Set x 5.28 ops/sec ±8.09% (17 runs sampled)
+FastBitSet x 11,599 ops/sec ±14.75% (72 runs sampled)
+TypedFastBitSet x 34,875 ops/sec ±1.12% (43 runs sampled)
+SparseTypedFastBitSet x 38,408 ops/sec ±0.81% (36 runs sampled)
+infusion.BitSet.js x 13,320 ops/sec ±0.73% (95 runs sampled)
+mattkrick.fast-bitset x 382 ops/sec ±0.40% (90 runs sampled)
+Set x 154 ops/sec ±0.48% (82 runs sampled)
 ```
 
-# You might also like...
+To reproduce, install benchmark dependencies and run:
 
-If you like this library, you might also like
+```bash
+npm install benchmark fastbitset bitset bitset.js fast-bitset roaring minimist
+npm run build:package
+npm run benchmark
+```
+
+## You might also like...
+
+If you like this library, you might also like:
 
 - https://github.com/lemire/FastBitSet.js
+- https://github.com/RoaringBitmap/roaring-node — Roaring Bitmaps for Node.js, potentially faster for very large or very sparse sets
 - https://github.com/lemire/FastPriorityQueue.js
 - https://github.com/lemire/StablePriorityQueue.js
 - https://github.com/lemire/FastIntegerCompression.js

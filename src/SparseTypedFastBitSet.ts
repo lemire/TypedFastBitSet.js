@@ -129,7 +129,7 @@ export class SparseTypedFastBitSet implements BitSet {
     if (type === Type.ARRAY) {
       const array = this.data;
       const arrayIndex = array.indexOf(index);
-      if (arrayIndex === -1) {
+      if (arrayIndex === -1 || arrayIndex >= this.arraySize) {
         if (this.arraySize > 0 && index > array[0]) {
           array[this.arraySize++] = array[0];
           array[0] = index;
@@ -283,8 +283,11 @@ export class SparseTypedFastBitSet implements BitSet {
     } else {
       const words = this.data;
 
-      start = Math.min(start, (words.length << 5) - 1);
-      end = Math.min(end, (words.length << 5) - 1);
+      start = Math.min(start, words.length << 5);
+      end = Math.min(end, words.length << 5);
+      if (start >= end) {
+        return;
+      }
 
       const firstword = start >> 5;
       const endword = (end - 1) >> 5;
@@ -440,18 +443,19 @@ export class SparseTypedFastBitSet implements BitSet {
         return Type.ARRAY;
       }
       if (array.length + capacity < 256) {
-        const newData = new Uint32Array((array.length + capacity) << 1);
+        const newData = new Uint32Array(Math.max((array.length + capacity) << 1, 8));
         newData.set(array);
         this.data = newData;
         return Type.ARRAY;
       } else {
-        const count = (Math.max(array[0], index) + 32) >>> 5;
+        const count =
+          (Math.max(this.arraySize > 0 ? array[0] : 0, index) + 32) >>> 5;
         // very sparse grow array some more
         if (
           count > array.length + capacity &&
           (array.length + capacity) << 1 < 1024
         ) {
-          const newData = new Uint32Array((array.length + capacity) << 1);
+          const newData = new Uint32Array(Math.max((array.length + capacity) << 1, 8));
           newData.set(array);
           this.data = newData;
           return Type.ARRAY;

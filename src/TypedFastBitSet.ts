@@ -175,8 +175,8 @@ export class TypedFastBitSet implements BitSet {
    */
   removeRange(start: number, end: number): void {
     const words = this.words;
-    start = Math.min(start, (this._count << 5) - 1);
-    end = Math.min(end, (this._count << 5) - 1);
+    start = Math.min(start, this._count << 5);
+    end = Math.min(end, this._count << 5);
 
     if (start >= end) {
       return;
@@ -218,14 +218,15 @@ export class TypedFastBitSet implements BitSet {
   hasAnyInRange(start: number, end: number): boolean {
     if (start >= end) return false;
     const words = this.words;
-    start = Math.min(start, (this._count << 5) - 1);
-    end = Math.min(end, (this._count << 5) - 1);
+    start = Math.min(start, this._count << 5);
+    end = Math.min(end, this._count << 5);
+    if (start >= end) return false;
     const firstword = start >>> 5;
     const endword = (end - 1) >> 5;
     if (firstword === endword)
       return (words[firstword] & ((~0 << start) & (~0 >>> -end))) !== 0;
     if ((words[firstword] & (~0 << start)) !== 0) return true;
-    for (let index = firstword + 1; index < endword - 1; index++)
+    for (let index = firstword + 1; index < endword; index++)
       if (words[index] !== 0) return true;
     return (words[endword] & (~0 >>> -end)) !== 0;
   }
